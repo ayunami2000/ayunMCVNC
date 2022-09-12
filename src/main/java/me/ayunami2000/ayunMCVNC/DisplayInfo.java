@@ -2,6 +2,7 @@ package me.ayunami2000.ayunMCVNC;
 
 import org.bukkit.Location;
 
+import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,8 +23,12 @@ public class DisplayInfo {
 	public Location location; // top left corner
 	public int width;
 	public String vnc;
+	public boolean paused;
 
-	public DisplayInfo(UUID uuid, List<Integer> mapIds, boolean dither, boolean mouse, boolean keys, boolean audio, Location location, int width, String vnc) {
+	public BufferedImage currentFrame = null;
+	public VideoCapture videoCapture;
+
+	public DisplayInfo(UUID uuid, List<Integer> mapIds, boolean dither, boolean mouse, boolean keys, boolean audio, Location location, int width, String vnc, boolean paused) {
 		this.uuid = uuid;
 		this.mapIds = mapIds;
 		this.dither = dither;
@@ -33,15 +38,18 @@ public class DisplayInfo {
 		this.location = location;
 		this.width = width;
 		this.vnc = vnc;
+		this.paused = paused;
 
 		displays.put(this.uuid, this);
 	}
 
 	public void delete() {
 		displays.remove(this.uuid);
+		if (videoCapture != null) videoCapture.cleanup();
 	}
 
 	public static void delete(UUID uuid) {
-		displays.remove(uuid);
+		DisplayInfo displayInfo = displays.remove(uuid);
+		if (displayInfo.videoCapture != null) displayInfo.videoCapture.cleanup();
 	}
 }

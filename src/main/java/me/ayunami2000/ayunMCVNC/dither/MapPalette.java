@@ -21,10 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package me.ayunami2000.MakiDesktop.dither;
+package me.ayunami2000.ayunMCVNC.dither;
 
 import java.awt.Color;
-import org.jetbrains.annotations.NotNull;
 
 public final class MapPalette {
 
@@ -180,12 +179,10 @@ public final class MapPalette {
         };
   }
 
-  @NotNull
   private static Color c(final int r, final int g, final int b) {
     return new Color(r, g, b);
   }
 
-  @NotNull
   public static Color getColor(final byte val) {
     return NMS_PALETTE[val];
   }

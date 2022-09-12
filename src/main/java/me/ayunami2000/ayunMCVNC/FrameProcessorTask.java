@@ -161,20 +161,17 @@ class FrameProcessorTask extends BukkitRunnable {
 	@Override
 	public void run() {
 		synchronized (lock) {
-			BufferedImage frame = VideoCapture.currentFrame;
+			BufferedImage frame = displayInfo.currentFrame;
 			if (frame == null) {
 				return;
 			}
-			if (frame.getWidth() != displayInfo.width * 128 || frame.getHeight() != 128 * (int) Math.ceil(displayInfo.width / displayInfo.mapIds.size())) {
-				frame = resize(frame, displayInfo.width * 128, (int) Math.ceil(displayInfo.width / displayInfo.mapIds.size()));//also changes type
+			if (frame.getWidth() != displayInfo.width * 128 || frame.getHeight() != 128 * (int) Math.ceil(displayInfo.width / (double) displayInfo.mapIds.size())) {
+				frame = resize(frame, displayInfo.width * 128, (int) Math.ceil(displayInfo.width / (double) displayInfo.mapIds.size()));//also changes type
 			} else if (frame.getType() != BufferedImage.TYPE_3BYTE_BGR) {
 				frame = changeType(frame);
 			}
 			frameData = ((DataBufferByte) frame.getRaster().getDataBuffer()).getData();
-			long l = System.nanoTime();
 			ditherFrame();
-			long diff = System.nanoTime() - l;
-//      System.out.println("DitherTime: " + diff + "ns");
 
 			byte[][] buffers = new byte[mapSize][];
 
@@ -189,7 +186,7 @@ class FrameProcessorTask extends BukkitRunnable {
 	private byte[] getMapData(int partId, int width) {
 		int offset = 0;
 		int startX = ((partId % displayInfo.width) * 128);
-		int startY = ((partId / (int) Math.ceil(displayInfo.width / displayInfo.mapIds.size())) * 128);
+		int startY = ((partId / (int) Math.ceil(displayInfo.width / (double) displayInfo.mapIds.size())) * 128);
 		int maxY = startY + 128;
 		int maxX = startX + 128;
 

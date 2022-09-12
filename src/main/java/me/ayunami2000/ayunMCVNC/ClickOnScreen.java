@@ -24,6 +24,7 @@ public class ClickOnScreen {
 	public static boolean clickedOnBlock(Block block, Player player, boolean doClick) {
 		Collection<DisplayInfo> displays = DisplayInfo.displays.values();
 		for (DisplayInfo display : displays) {
+			if (display.paused) continue;
 			// note: when setting yaw, always ensure it is NOT negative!!
 			Vector endLoc = new Vector(display.location.getX() + (display.location.getYaw() == 270 ? 1 : (display.location.getYaw() == 90 ? -1 : 0)), display.location.getY() - Math.ceil((double) display.width / (double) display.mapIds.size()), display.location.getZ() + ((display.location.getYaw() == 0 || display.location.getYaw() == 360) ? 1 : (display.location.getYaw() == 180 ? -1 : 0)));
 			if (numBetween(block.getX(), display.location.getX(), endLoc.getX()) && numBetween(block.getY(), display.location.getY(), endLoc.getY()) && numBetween(block.getZ(), display.location.getZ(), endLoc.getZ())) {
@@ -67,21 +68,19 @@ public class ClickOnScreen {
 						player.sendMessage(x + ", " + y);
 
 
-						/*
 						int slot = player.getInventory().getHeldItemSlot();
 						if (!doClick) {
-							MakiDesktop.clickMouse(x, y, 0, false);
+							display.videoCapture.clickMouse(x, y, 0, false);
 						} else if (slot == 6) {
-							MakiDesktop.alwaysMoveMouse = !MakiDesktop.alwaysMoveMouse;
-							player.sendMessage("No" + (MakiDesktop.alwaysMoveMouse ? "w" : " longer") + " controlling mouse.");
+							// MakiDesktop.alwaysMoveMouse = !MakiDesktop.alwaysMoveMouse;
+							// player.sendMessage("No" + (MakiDesktop.alwaysMoveMouse ? "w" : " longer") + " controlling mouse.");
 						} else if (slot == 7) {
-							MakiDesktop.clickMouse(x, y, 0, false);
+							display.videoCapture.clickMouse(x, y, 0, false);
 						} else if (slot == 8) {
 							// do nothing
 						} else {
-							MakiDesktop.clickMouse(x, y, (slot % 3) + 1, slot == 3 || slot == 4 || slot == 5);
+							display.videoCapture.clickMouse(x, y, (slot % 3) + 1, slot == 3 || slot == 4 || slot == 5);
 						}
-						*/
 						return true;
 					}
 				}

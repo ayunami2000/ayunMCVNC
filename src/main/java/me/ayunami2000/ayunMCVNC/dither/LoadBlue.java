@@ -21,14 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package me.ayunami2000.MakiDesktop.dither;
+package me.ayunami2000.ayunMCVNC.dither;
 
-import java.io.Serial;
 import java.util.concurrent.RecursiveTask;
 
 final class LoadBlue extends RecursiveTask<Byte> {
 
-  @Serial private static final long serialVersionUID = 5331764784578439634L;
+  private static final long serialVersionUID = 5331764784578439634L;
   private final int r, g, b;
   private final int[] palette;
 

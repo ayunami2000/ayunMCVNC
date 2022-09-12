@@ -70,6 +70,7 @@ public class ImageManager implements Listener {
 			location.set("dir", (int) displayInfo.location.getYaw() / 90);
 			displayProperties.set("width", displayInfo.width);
 			displayProperties.set("vnc", displayInfo.vnc);
+			displayProperties.set("paused", displayInfo.paused);
 		}
 		saveData();
 	}
@@ -82,7 +83,10 @@ public class ImageManager implements Listener {
 				ConfigurationSection displayProperties = displays.getConfigurationSection(displayId);
 				ConfigurationSection location = displayProperties.getConfigurationSection("location");
 				Location loc = new Location(Main.plugin.getServer().getWorld(location.getString("world")), location.getInt("x"), location.getInt("y"), location.getInt("z"), location.getInt("dir") * 90, 0);
-				new DisplayInfo(UUID.fromString(displayId), displayProperties.getIntegerList("mapIds"), displayProperties.getBoolean("dither"), displayProperties.getBoolean("mouse"), displayProperties.getBoolean("keys"), displayProperties.getBoolean("audio"), loc, displayProperties.getInt("width"), displayProperties.getString("vnc"));
+				DisplayInfo displayInfo = new DisplayInfo(UUID.fromString(displayId), displayProperties.getIntegerList("mapIds"), displayProperties.getBoolean("dither"), displayProperties.getBoolean("mouse"), displayProperties.getBoolean("keys"), displayProperties.getBoolean("audio"), loc, displayProperties.getInt("width"), displayProperties.getString("vnc"), displayProperties.getBoolean("paused"));
+				VideoCapture videoCapture = new VideoCapture(displayInfo);
+				displayInfo.videoCapture = videoCapture;
+				videoCapture.start();
 			}
 		}
 	}
