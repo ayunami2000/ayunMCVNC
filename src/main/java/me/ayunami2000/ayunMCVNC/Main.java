@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 public class Main extends JavaPlugin implements Listener {
 	public static Main plugin;
@@ -79,6 +78,7 @@ public class Main extends JavaPlugin implements Listener {
 		String firstArg = args.length == 0 ? "" : args[0];
 		switch (firstArg) {
 			case "create":
+				// name
 				// width
 				// height
 				// dither
@@ -87,12 +87,17 @@ public class Main extends JavaPlugin implements Listener {
 				// audio (todo: implement)
 				// ip:port
 				// paused (optional)
-				if (args.length < 8) {
-					sender.sendMessage("Usage: /mcvnc create <width (e.g. 5)> <height (e.g. 4)> <dither (e.g. true)> <mouse> <keys> <audio> <ip:port> [paused]");
+				if (args.length < 9) {
+					sender.sendMessage("Usage: /mcvnc create <name> <width (e.g. 5)> <height (e.g. 4)> <dither (e.g. true)> <mouse> <keys> <audio> <ip:port> [paused]");
 					return true;
 				}
 				if (!(sender instanceof Player)) {
 					sender.sendMessage("Error: Currently, you must be a player in-game so that the screen location can be set!");
+					return true;
+				}
+				String newName = args[1].toLowerCase();
+				if (DisplayInfo.displays.containsKey(newName)) {
+					sender.sendMessage("Error: A display with that name already exists!");
 					return true;
 				}
 				Location loc = ((Player) sender).getTargetBlock(null, 5).getLocation();
@@ -102,17 +107,17 @@ public class Main extends JavaPlugin implements Listener {
 				loc.setYaw(yaw);
 				loc.setPitch(0);
 
-				int width = Integer.parseInt(args[1]);
-				int height = Integer.parseInt(args[2]);
+				int width = Integer.parseInt(args[2]);
+				int height = Integer.parseInt(args[3]);
 
-				boolean dither = Boolean.parseBoolean(args[3]);
-				boolean mouse = Boolean.parseBoolean(args[4]);
-				boolean keys = Boolean.parseBoolean(args[5]);
-				boolean audio = Boolean.parseBoolean(args[6]);
+				boolean dither = Boolean.parseBoolean(args[4]);
+				boolean mouse = Boolean.parseBoolean(args[5]);
+				boolean keys = Boolean.parseBoolean(args[6]);
+				boolean audio = Boolean.parseBoolean(args[7]);
 
-				String vnc = args[7];
+				String vnc = args[8];
 
-				boolean paused = args.length < 9 ? false : Boolean.parseBoolean(args[8]);
+				boolean paused = args.length < 9 ? false : Boolean.parseBoolean(args[9]);
 
 				List<Integer> mapIds = new ArrayList<>(width * height);
 
@@ -129,31 +134,31 @@ public class Main extends JavaPlugin implements Listener {
 
 					mapIds.add((int) mapView.getId());
 				}
-				DisplayInfo displayInfo = new DisplayInfo(UUID.randomUUID(), mapIds, dither, mouse, keys, audio, loc, width, vnc, paused);
+				DisplayInfo displayInfo = new DisplayInfo(newName, mapIds, dither, mouse, keys, audio, loc, width, vnc, paused);
 				ImageManager.getInstance().saveImage(displayInfo);
-				sender.sendMessage("Display successfully created! UUID: " + displayInfo.uuid.toString());
+				sender.sendMessage("Display successfully created! Name: " + displayInfo.name);
 				return true;
 			case "delete":
 				if (args.length < 2) {
-					sender.sendMessage("Usage: /mcvnc delete <uuid>");
+					sender.sendMessage("Usage: /mcvnc delete <name>");
 					return true;
 				}
-				DisplayInfo displayInfoo = DisplayInfo.displays.getOrDefault(UUID.fromString(args[1]), null);
+				DisplayInfo displayInfoo = DisplayInfo.displays.getOrDefault(args[1], null);
 				if (displayInfoo == null) {
 					sender.sendMessage("Error: Invalid display!");
 				} else {
 					displayInfoo.paused = true;
 					displayInfoo.delete();
-					ImageManager.getInstance().removeImage(displayInfoo.uuid);
+					ImageManager.getInstance().removeImage(displayInfoo.name);
 				}
 				sender.sendMessage("Display successfully deleted!");
 				return true;
 			case "toggle":
 				if (args.length < 2) {
-					sender.sendMessage("Usage: /mcvnc toggle <uuid>");
+					sender.sendMessage("Usage: /mcvnc toggle <name>");
 					return true;
 				}
-				DisplayInfo displayInfoooo = DisplayInfo.displays.getOrDefault(UUID.fromString(args[1]), null);
+				DisplayInfo displayInfoooo = DisplayInfo.displays.getOrDefault(args[1], null);
 				if (displayInfoooo == null) {
 					sender.sendMessage("Error: Invalid display!");
 				} else {
@@ -164,10 +169,10 @@ public class Main extends JavaPlugin implements Listener {
 				return true;
 			case "move":
 				if (args.length < 2) {
-					sender.sendMessage("Usage: /mcvnc move <uuid>");
+					sender.sendMessage("Usage: /mcvnc move <name>");
 					return true;
 				}
-				DisplayInfo displayInfooooo = DisplayInfo.displays.getOrDefault(UUID.fromString(args[1]), null);
+				DisplayInfo displayInfooooo = DisplayInfo.displays.getOrDefault(args[1], null);
 				if (displayInfooooo == null) {
 					sender.sendMessage("Error: Invalid display!");
 				} else {
@@ -185,18 +190,18 @@ public class Main extends JavaPlugin implements Listener {
 				return true;
 			case "list":
 				sender.sendMessage("Displays:");
-				Set<UUID> displayIds = DisplayInfo.displays.keySet();
+				Set<String> displayIds = DisplayInfo.displays.keySet();
 				if (displayIds.size() == 0) {
 					sender.sendMessage("(there are no displays...)");
 				} else {
-					for (UUID displayId : displayIds) {
-						sender.sendMessage(" -> " + displayId.toString());
+					for (String displayId : displayIds) {
+						sender.sendMessage(" -> " + displayId);
 					}
 				}
 				return true;
 			case "cb":
 				if (args.length > 2) {
-					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(UUID.fromString(args[1]), null);
+					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(args[1], null);
 					if (displayInfooo == null) {
 						sender.sendMessage("Error: Invalid display!");
 					} else {
@@ -227,14 +232,14 @@ public class Main extends JavaPlugin implements Listener {
 						}
 					}
 				} else {
-					sender.sendMessage("Usage: /mcvnc cb <uuid> [key|mouse]");
+					sender.sendMessage("Usage: /mcvnc cb <name> [key|mouse]");
 				}
 				return true;
 			case "type":
 				if (args.length == 1 || args.length == 2) {
-					sender.sendMessage("Usage: /mcvnc type <uuid> <text>");
+					sender.sendMessage("Usage: /mcvnc type <name> <text>");
 				} else {
-					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(UUID.fromString(args[1]), null);
+					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(args[1], null);
 					if (displayInfooo == null) {
 						sender.sendMessage("Error: Invalid display!");
 					} else {
@@ -248,9 +253,9 @@ public class Main extends JavaPlugin implements Listener {
 				return true;
 			case "key":
 				if (args.length == 1 || args.length == 2) {
-					sender.sendMessage("Usage: /mcvnc key <uuid> <keyname>\n§lWarning: Case sensitive!");
+					sender.sendMessage("Usage: /mcvnc key <name> <keyname>\n§lWarning: Case sensitive!");
 				} else {
-					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(UUID.fromString(args[1]), null);
+					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(args[1], null);
 					if (displayInfooo == null) {
 						sender.sendMessage("Error: Invalid display!");
 					} else {
@@ -267,9 +272,9 @@ public class Main extends JavaPlugin implements Listener {
 				return true;
 			case "keystate":
 				if (args.length == 1 || args.length == 2 || args.length == 3) {
-					sender.sendMessage("Usage: /mcvnc keystate <uuid> <down|up> <keyname>\n§lWarning: Case sensitive!");
+					sender.sendMessage("Usage: /mcvnc keystate <name> <down|up> <keyname>\n§lWarning: Case sensitive!");
 				} else {
-					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(UUID.fromString(args[1]), null);
+					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(args[1], null);
 					if (displayInfooo == null) {
 						sender.sendMessage("Error: Invalid display!");
 					} else {
@@ -287,9 +292,9 @@ public class Main extends JavaPlugin implements Listener {
 				return true;
 			case "press":
 				if (args.length == 1 || args.length == 2 || args.length == 3) {
-					sender.sendMessage("Usage: /mcvnc press <uuid> <duration> <keyname>\n§lWarning: Case sensitive!");
+					sender.sendMessage("Usage: /mcvnc press <name> <duration> <keyname>\n§lWarning: Case sensitive!");
 				} else {
-					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(UUID.fromString(args[1]), null);
+					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(args[1], null);
 					if (displayInfooo == null) {
 						sender.sendMessage("Error: Invalid display!");
 					} else {

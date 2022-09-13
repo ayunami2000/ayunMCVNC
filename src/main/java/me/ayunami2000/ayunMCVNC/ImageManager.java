@@ -12,7 +12,6 @@ import org.bukkit.map.MapView;
 import org.bukkit.map.MapView.Scale;
 
 import java.util.Set;
-import java.util.UUID;
 
 /***
  *
@@ -47,7 +46,7 @@ public class ImageManager implements Listener {
 
 	public void saveImage(DisplayInfo displayInfo) {
 		if (getData().contains("displays")) {
-			String displayId = displayInfo.uuid.toString();
+			String displayId = displayInfo.name.toString();
 			ConfigurationSection displays = getData().getConfigurationSection("displays");
 			if (!displays.contains(displayId)) {
 				displays.createSection(displayId);
@@ -84,7 +83,7 @@ public class ImageManager implements Listener {
 				ConfigurationSection displayProperties = displays.getConfigurationSection(displayId);
 				ConfigurationSection location = displayProperties.getConfigurationSection("location");
 				Location loc = new Location(Main.plugin.getServer().getWorld(location.getString("world")), location.getInt("x"), location.getInt("y"), location.getInt("z"), location.getInt("dir") * 90F, 0);
-				new DisplayInfo(UUID.fromString(displayId), displayProperties.getIntegerList("mapIds"), displayProperties.getBoolean("dither"), displayProperties.getBoolean("mouse"), displayProperties.getBoolean("keys"), displayProperties.getBoolean("audio"), loc, displayProperties.getInt("width"), displayProperties.getString("vnc"), displayProperties.getBoolean("paused"));
+				new DisplayInfo(displayId, displayProperties.getIntegerList("mapIds"), displayProperties.getBoolean("dither"), displayProperties.getBoolean("mouse"), displayProperties.getBoolean("keys"), displayProperties.getBoolean("audio"), loc, displayProperties.getInt("width"), displayProperties.getString("vnc"), displayProperties.getBoolean("paused"));
 			}
 		}
 	}
@@ -93,7 +92,7 @@ public class ImageManager implements Listener {
 		return DisplayInfo.displays.values().stream().anyMatch(displayInfo -> displayInfo.mapIds.contains(id));
 	}
 
-	public void removeImage(UUID displayId) {
+	public void removeImage(String displayId) {
 		if (getData().contains("displays")) {
 			ConfigurationSection displays = getData().getConfigurationSection("displays");
 			if (displays.isSet(displayId.toString())) {
