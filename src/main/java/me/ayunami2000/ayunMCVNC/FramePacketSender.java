@@ -21,35 +21,16 @@ class FramePacketSender extends BukkitRunnable {
 
 	@Override
 	public void run() {
-		FrameItem frameItem = frameBuffers.poll();
-		if (frameItem == null) {
-			return;
-		}
-		byte[][] buffers = frameItem.frameBuffer;
-		// todo: only send if within certain distance...?
-		List<PacketPlayOutMap> packets = new ArrayList<>(frameItem.display.mapIds.size());
-		int numMaps = frameItem.display.mapIds.size();
-		for (int i = 0; i < numMaps; i++) {
-			byte[] buffer = buffers[i];
-			int mapId = frameItem.display.mapIds.get(i);
-			if (buffer != null) {
-				PacketPlayOutMap packet = getPacket(mapId, buffer);
-				boolean modified = DisplayInfo.screenPartModified.contains(mapId);
-				if (!modified) {
-					packets.add(0, packet);
-				} else {
-					packets.add(packet);
-				}
-				DisplayInfo.screenPartModified.add(mapId);
-			} else {
-				DisplayInfo.screenPartModified.remove(mapId);
+		for (int batch = 0; batch < 5; batch++) {
+			FrameItem frameItem = frameBuffers.poll();
+			if (frameItem == null) {
+				continue;
 			}
-		}
-		// notice: below doesnt work for multiple displays... (bc of use of buffers[i])
-		/*
-		Collection<DisplayInfo> displays = DisplayInfo.displays.values();
-		for (DisplayInfo displayInfo : displays) {
-			for (int i = 0; i < displayInfo.mapIds.size(); i++) {
+			byte[][] buffers = frameItem.frameBuffer;
+			// todo: only send if within certain distance...?
+			List<PacketPlayOutMap> packets = new ArrayList<>(frameItem.display.mapIds.size());
+			int numMaps = frameItem.display.mapIds.size();
+			for (int i = 0; i < numMaps; i++) {
 				byte[] buffer = buffers[i];
 				int mapId = frameItem.display.mapIds.get(i);
 				if (buffer != null) {
@@ -65,22 +46,21 @@ class FramePacketSender extends BukkitRunnable {
 					DisplayInfo.screenPartModified.remove(mapId);
 				}
 			}
-		}
-		*/
 
-		for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-			sendToPlayer(onlinePlayer, packets);
-		}
-
-		if (frameNumber % 300 == 0) {
-			FrameItem peek = frameBuffers.peek();
-			if (peek != null) {
-				frameBuffers.clear();
-				frameBuffers.offer(peek);
+			for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+				sendToPlayer(onlinePlayer, packets);
 			}
-			frameNumber = 0;
+
+			if (frameNumber % 300 == 0) {
+				FrameItem peek = frameBuffers.peek();
+				if (peek != null) {
+					frameBuffers.clear();
+					frameBuffers.offer(peek);
+				}
+				frameNumber = 0;
+			}
+			frameNumber++;
 		}
-		frameNumber++;
 	}
 
 	private void sendToPlayer(Player player, List<PacketPlayOutMap> packets) {

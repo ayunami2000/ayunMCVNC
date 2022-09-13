@@ -244,6 +244,26 @@ public class Main extends JavaPlugin implements Listener {
 					}
 				}
 				return true;
+			case "keystate":
+				if (args.length == 1 || args.length == 2 || args.length == 3) {
+					sender.sendMessage("Usage: /mcvnc keystate <uuid> <down|up> <keyname>\n§lWarning: Case sensitive!");
+				} else {
+					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(UUID.fromString(args[1]), null);
+					if (displayInfooo == null) {
+						sender.sendMessage("Error: Invalid display!");
+					} else {
+						if (displayInfooo.paused) {
+							sender.sendMessage("Error: This display is currently paused!");
+							return true;
+						}
+						boolean pressed = args[2].equalsIgnoreCase("down");
+						String[] trimargs = Arrays.copyOfRange(args, 3, args.length);
+						for (String arg : trimargs) {
+							displayInfooo.videoCapture.pressKey(arg, pressed);
+						}
+					}
+				}
+				return true;
 			case "press":
 				if (args.length == 1 || args.length == 2 || args.length == 3) {
 					sender.sendMessage("Usage: /mcvnc press <uuid> <duration> <keyname>\n§lWarning: Case sensitive!");
@@ -269,7 +289,7 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				return true;
 			default:
-				sender.sendMessage("usage: /mcvnc [create|delete|toggle|list|cb|type|key|press] [...]");
+				sender.sendMessage("usage: /mcvnc [create|delete|toggle|list|cb|type|key|press|keystate] [...]");
 		}
 		return true;
 	}
