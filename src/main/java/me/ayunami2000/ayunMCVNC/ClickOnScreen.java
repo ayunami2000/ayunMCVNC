@@ -25,8 +25,11 @@ public class ClickOnScreen {
 		Collection<DisplayInfo> displays = DisplayInfo.displays.values();
 		for (DisplayInfo display : displays) {
 			if (display.paused) continue;
-			// note: when setting yaw, always ensure it is NOT negative!!
-			Vector endLoc = new Vector(display.location.getX() + (display.location.getYaw() == 270 ? 1 : (display.location.getYaw() == 90 ? -1 : 0)), display.location.getY() - Math.ceil(display.mapIds.size() / (double) display.width), display.location.getZ() + ((display.location.getYaw() == 0 || display.location.getYaw() == 360) ? 1 : (display.location.getYaw() == 180 ? -1 : 0)));
+			float dYaw = ImageManager.fixYaw(display.location.getYaw());
+			System.out.println(display.location);
+			Vector endLoc = new Vector(display.location.getX() + (dYaw == 0 ? display.width : (dYaw == 180 ? -display.width : 0)), display.location.getY() + 1 - Math.ceil(display.mapIds.size() / (double) display.width), display.location.getZ() + (dYaw == 270 ? display.width : (dYaw == 90 ? -display.width : 0)));
+			System.out.println(endLoc);
+			System.out.println(block.getLocation());
 			if (numBetween(block.getX(), display.location.getX(), endLoc.getX()) && numBetween(block.getY(), display.location.getY(), endLoc.getY()) && numBetween(block.getZ(), display.location.getZ(), endLoc.getZ())) {
 				Location plyrloc = player.getLocation();
 				float yaw = plyrloc.getYaw();
@@ -34,7 +37,7 @@ public class ClickOnScreen {
 					yaw += 360;
 				}
 				yaw = yaw % 360;
-				if (((display.location.getYaw() == 0 || display.location.getYaw() == 360) && (yaw < 90 || yaw >= 270)) || (display.location.getYaw() == 90 && (yaw >= 0 && yaw < 180)) || (display.location.getYaw() == 180 && (yaw >= 90 && yaw < 270)) || (display.location.getYaw() == 270 && (yaw >= 180 && yaw < 360))) {
+				if ((dYaw == 0 && (yaw < 90 || yaw >= 270)) || (dYaw == 90 && (yaw >= 0 && yaw < 180)) || (dYaw == 180 && (yaw >= 90 && yaw < 270)) || (dYaw == 270 && (yaw >= 180 && yaw < 360))) {
 					//looking at screen from the correct angle
 					BlockFace blockFace = getBlockFace(player, 5);
 					if (blockFace == numberToBlockFace[(int) (((display.location.getYaw() / 90) + 2) % 4)]) {
@@ -42,21 +45,21 @@ public class ClickOnScreen {
 						Vector exactLoc = IntersectionUtils.getIntersection(player.getEyeLocation(), block, blockFace, 0);
 						double y = 1.0 - (exactLoc.getY() - endLoc.getY()) / ((double) (display.mapIds.size() / display.width));
 						double x = 0;
-						if (display.location.getYaw() == 0 || display.location.getYaw() == 360) {
+						if (dYaw == 0) {
 							//south -
 							x = exactLoc.getX() - endLoc.getX();
-						} else if (display.location.getYaw() == 90) {
+						} else if (dYaw == 90) {
 							//west -
 							x = exactLoc.getZ() - endLoc.getZ();
-						} else if (display.location.getYaw() == 180) {
+						} else if (dYaw == 180) {
 							//north +
 							x = exactLoc.getX() - display.location.getX();
-						} else if (display.location.getYaw() == 270) {
+						} else if (dYaw == 270) {
 							//east +
 							x = exactLoc.getZ() - display.location.getZ();
 						}
 						x = x / (double) display.width;
-						if (display.location.getYaw() == 0 || display.location.getYaw() == 90 || display.location.getYaw() == 360) {
+						if (dYaw == 0 || dYaw == 90) {
 							x = 1.0 - x;
 						}
 

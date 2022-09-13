@@ -80,7 +80,10 @@ public class Main extends JavaPlugin implements Listener {
 					return true;
 				}
 				Location loc = ((Player) sender).getTargetBlock(null, 5).getLocation();
-				loc.setYaw(((Player) sender).getLocation().getYaw());
+				int yaw = (int) ((Player) sender).getLocation().getYaw();
+				while (yaw < 0) yaw += 360;
+				yaw = yaw % 360;
+				loc.setYaw(yaw);
 				loc.setPitch(0);
 
 				int width = Integer.parseInt(args[1]);

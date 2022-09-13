@@ -63,7 +63,7 @@ public class ImageManager implements Listener {
 			location.set("x", displayInfo.location.getBlockX());
 			location.set("y", displayInfo.location.getBlockY());
 			location.set("z", displayInfo.location.getBlockZ());
-			location.set("dir", (int) displayInfo.location.getYaw() / 90);
+			location.set("dir", (int) fixYaw(displayInfo.location.getYaw()) / 90);
 			displayProperties.set("width", displayInfo.width);
 			displayProperties.set("vnc", displayInfo.vnc);
 			displayProperties.set("paused", displayInfo.paused);
@@ -78,7 +78,7 @@ public class ImageManager implements Listener {
 			for (String displayId : displayIds) {
 				ConfigurationSection displayProperties = displays.getConfigurationSection(displayId);
 				ConfigurationSection location = displayProperties.getConfigurationSection("location");
-				Location loc = new Location(Main.plugin.getServer().getWorld(location.getString("world")), location.getInt("x"), location.getInt("y"), location.getInt("z"), location.getInt("dir") * 90, 0);
+				Location loc = new Location(Main.plugin.getServer().getWorld(location.getString("world")), location.getInt("x"), location.getInt("y"), location.getInt("z"), fixYaw(location.getInt("dir") * 90), 0);
 				new DisplayInfo(UUID.fromString(displayId), displayProperties.getIntegerList("mapIds"), displayProperties.getBoolean("dither"), displayProperties.getBoolean("mouse"), displayProperties.getBoolean("keys"), displayProperties.getBoolean("audio"), loc, displayProperties.getInt("width"), displayProperties.getString("vnc"), displayProperties.getBoolean("paused"));
 			}
 		}
@@ -103,5 +103,9 @@ public class ImageManager implements Listener {
 
 	public void saveData() {
 		Main.plugin.saveConfig();
+	}
+
+	public static int fixYaw(float yaw) {
+		return 90 * (int) Math.ceil(yaw / 90);
 	}
 }
