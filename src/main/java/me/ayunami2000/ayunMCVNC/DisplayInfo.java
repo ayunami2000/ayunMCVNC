@@ -31,7 +31,7 @@ public class DisplayInfo {
 
 	public BufferedImage currentFrame = null;
 	public VideoCapture videoCapture;
-	private BukkitTask task1;
+	private final BukkitTask task1;
 
 	public DisplayInfo(UUID uuid, List<Integer> mapIds, boolean dither, boolean mouse, boolean keys, boolean audio, Location location, int width, String vnc, boolean paused) {
 		this.uuid = uuid;

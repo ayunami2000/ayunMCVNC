@@ -162,6 +162,27 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				sender.sendMessage("Display toggled!");
 				return true;
+			case "move":
+				if (args.length < 2) {
+					sender.sendMessage("Usage: /mcvnc move <uuid>");
+					return true;
+				}
+				DisplayInfo displayInfooooo = DisplayInfo.displays.getOrDefault(UUID.fromString(args[1]), null);
+				if (displayInfooooo == null) {
+					sender.sendMessage("Error: Invalid display!");
+				} else {
+					Location locc = ((Player) sender).getTargetBlock(null, 5).getLocation();
+					int yaww = (int) ((Player) sender).getLocation().getYaw();
+					while (yaww < 0) yaww += 360;
+					yaww = yaww % 360;
+					locc.setYaw(yaww);
+					locc.setPitch(0);
+					displayInfooooo.location = locc;
+					displayInfooooo.setEndLoc();
+					ImageManager.getInstance().saveImage(displayInfooooo);
+				}
+				sender.sendMessage("Display moved!");
+				return true;
 			case "list":
 				sender.sendMessage("Displays:");
 				Set<UUID> displayIds = DisplayInfo.displays.keySet();
@@ -289,7 +310,7 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				return true;
 			default:
-				sender.sendMessage("usage: /mcvnc [create|delete|toggle|list|cb|type|key|press|keystate] [...]");
+				sender.sendMessage("usage: /mcvnc [create|delete|toggle|move|list|cb|type|key|press|keystate] [...]");
 		}
 		return true;
 	}
