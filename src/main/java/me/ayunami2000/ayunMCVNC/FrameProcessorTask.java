@@ -2,9 +2,10 @@ package me.ayunami2000.ayunMCVNC;
 
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.awt.Graphics2D;
+import java.awt.Image;
 
 import static me.ayunami2000.ayunMCVNC.dither.DitherLookupUtil.COLOR_MAP;
 import static me.ayunami2000.ayunMCVNC.dither.DitherLookupUtil.FULL_COLOR_MAP;
@@ -164,7 +165,13 @@ class FrameProcessorTask extends BukkitRunnable {
 				frame = changeType(frame);
 			}
 			frameData = ((DataBufferByte) frame.getRaster().getDataBuffer()).getData();
-			ditherFrame();
+			if (displayInfo.dither) {
+				ditherFrame();
+			} else {
+				for (int i = 0; i < frameData.length; i += 3) {
+					ditheredFrameData[i / 3] = (byte) ((frameData[i + 2] * 6 / 256) * 36 + (frameData[i + 1] * 6 / 256) * 6 + (frameData[i] * 6 / 256));
+				}
+			}
 
 			byte[][] buffers = new byte[mapSize][];
 

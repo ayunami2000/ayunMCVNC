@@ -1,5 +1,6 @@
 package me.ayunami2000.ayunMCVNC;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -19,7 +20,7 @@ import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -41,29 +42,29 @@ public class Main extends JavaPlugin implements Listener {
 		pm.registerEvents(new ScreenClickEvent(), this);
 
 		FramePacketSender framePacketSender = new FramePacketSender();
-		Main.tasks.add(framePacketSender.runTaskTimerAsynchronously(this, 0, 1));
+		tasks.add(framePacketSender.runTaskTimerAsynchronously(this, 0, 1));
 
-		Main.tasks.add(new BukkitRunnable() {
+		tasks.add(new BukkitRunnable() {
 			@Override
 			public void run() {
-				// todo: check if this is laggy when lots of players
-				Collection<? extends Player> players = Main.this.getServer().getOnlinePlayers();
+				Set<Player> players = new HashSet<>(Bukkit.getOnlinePlayers());
 				for (Player player : players) {
 					Block tgtbl = player.getTargetBlock(null, 5);
 					if (tgtbl != null) ClickOnScreen.clickedOnBlock(tgtbl, player, false);
 				}
 			}
-		}.runTaskTimerAsynchronously(this, 0, 10));
+		}.runTaskTimerAsynchronously(this, 0, 40)); // every 2 seconds
 	}
 
 	@Override
 	public void onDisable() {
 		this.saveConfig();
-		Collection<DisplayInfo> displays = DisplayInfo.displays.values();
+		Set<DisplayInfo> displays = new HashSet<>(DisplayInfo.displays.values());
 		for (DisplayInfo display : displays) {
 			display.delete();
 		}
 		for (BukkitTask task : tasks) task.cancel();
+		tasks.clear();
 	}
 
 	@Override
@@ -146,6 +147,20 @@ public class Main extends JavaPlugin implements Listener {
 					ImageManager.getInstance().removeImage(displayInfoo.uuid);
 				}
 				sender.sendMessage("Display successfully deleted!");
+				return true;
+			case "toggle":
+				if (args.length < 2) {
+					sender.sendMessage("Usage: /mcvnc toggle <uuid>");
+					return true;
+				}
+				DisplayInfo displayInfoooo = DisplayInfo.displays.getOrDefault(UUID.fromString(args[1]), null);
+				if (displayInfoooo == null) {
+					sender.sendMessage("Error: Invalid display!");
+				} else {
+					displayInfoooo.paused = !displayInfoooo.paused;
+					ImageManager.getInstance().saveImage(displayInfoooo);
+				}
+				sender.sendMessage("Display toggled!");
 				return true;
 			case "list":
 				sender.sendMessage("Displays:");
@@ -254,7 +269,7 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				return true;
 			default:
-				sender.sendMessage("usage: /mcvnc [create|delete|list|cb|type|key|press] [...]");
+				sender.sendMessage("usage: /mcvnc [create|delete|toggle|list|cb|type|key|press] [...]");
 		}
 		return true;
 	}

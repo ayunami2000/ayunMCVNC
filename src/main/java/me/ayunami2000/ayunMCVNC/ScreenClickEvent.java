@@ -16,6 +16,7 @@ public class ScreenClickEvent implements Listener {
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onPlayerInteract(PlayerInteractEntityEvent event) {
 		Player player = event.getPlayer();
+		if (!player.isOp()) return;
 		Block block = player.getTargetBlock(null, 5);
 		ClickOnScreen.clickedOnBlock(block, player, true);
 	}
@@ -23,6 +24,7 @@ public class ScreenClickEvent implements Listener {
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onRightClick(PlayerInteractEvent event) {
 		Player player = event.getPlayer();
+		if (!player.isOp()) return;
 		Action action = event.getAction();
 
 		if ((action.equals(Action.RIGHT_CLICK_BLOCK)) && event.getHand() == EquipmentSlot.HAND) {
@@ -33,6 +35,18 @@ public class ScreenClickEvent implements Listener {
 			if (bloc.getX() == tloc.getX() && bloc.getY() == tloc.getY() && bloc.getZ() == tloc.getZ()) {
 				ClickOnScreen.clickedOnBlock(block, player, true);
 			}
+		}
+	}
+
+	@EventHandler
+	public void onPlayerMove(PlayerMoveEvent event) {
+		Player player = event.getPlayer();
+		if (!player.isOp()) return;
+		Location from = event.getFrom();
+		Location to = event.getTo();
+		if (from.getYaw() != to.getYaw() || from.getPitch() != to.getPitch()) {
+			Block tgtbl = player.getTargetBlock(null, 5);
+			if (tgtbl != null) ClickOnScreen.clickedOnBlock(tgtbl, player, false);
 		}
 	}
 }

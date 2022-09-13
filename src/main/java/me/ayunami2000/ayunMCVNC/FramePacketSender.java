@@ -3,13 +3,11 @@ package me.ayunami2000.ayunMCVNC;
 import com.google.common.collect.EvictingQueue;
 import net.minecraft.server.v1_12_R1.PacketPlayOutMap;
 import org.bukkit.Bukkit;
-import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
@@ -80,6 +78,7 @@ class FramePacketSender extends BukkitRunnable {
 				frameBuffers.clear();
 				frameBuffers.offer(peek);
 			}
+			frameNumber = 0;
 		}
 		frameNumber++;
 	}

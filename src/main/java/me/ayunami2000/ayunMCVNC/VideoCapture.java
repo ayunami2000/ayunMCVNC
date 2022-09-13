@@ -4,7 +4,8 @@ import com.shinyhut.vernacular.client.VernacularClient;
 import com.shinyhut.vernacular.client.VernacularConfig;
 import com.shinyhut.vernacular.client.rendering.ColorDepth;
 
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -17,7 +18,7 @@ class VideoCaptureVnc extends Thread {
 	public void onFrame(BufferedImage frame) {
 	}
 
-	private static Pattern ipPortPattern = Pattern.compile("([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}|localhost):?([0-9]{1,5})?");
+	private static Pattern ipPortPattern = Pattern.compile("([^:]+):?([0-9]{1,5})?");
 	private VernacularConfig config = new VernacularConfig();
 	private VernacularClient client = new VernacularClient(config);
 	private int screenWidth = 0;
@@ -69,11 +70,15 @@ class VideoCaptureVnc extends Thread {
 		config.setColorDepth(ColorDepth.BPP_24_TRUE);
 		config.setErrorListener(e -> {
 			e.printStackTrace();
-			client.stop();
-			displayInfo.paused = true;
+			if (client.isRunning()) client.stop();
 		});
 
-		//config.setTargetFramesPerSecond(20);
+		config.setEnableCopyrectEncoding(true);
+		config.setEnableHextileEncoding(true);
+		config.setEnableRreEncoding(true);
+		config.setEnableZLibEncoding(true);
+
+		config.setTargetFramesPerSecond(5);
 
 		config.setShared(true);
 
@@ -81,7 +86,7 @@ class VideoCaptureVnc extends Thread {
 		// config.setPasswordSupplier(() -> MakiDesktop.getUserPass()[1]);
 
 		config.setScreenUpdateListener(image -> {
-			if (displayInfo.paused || rendering > 5) return;//dont get too behind
+			if (displayInfo.paused || rendering > 5) return; // don't get too behind
 			rendering++;
 
 			int oldWidth = screenWidth;
@@ -95,11 +100,13 @@ class VideoCaptureVnc extends Thread {
 
 			onFrame(toBufferedImage(image));
 
-			try {
-				Thread.sleep(200);//frame delay
-			} catch (InterruptedException e) {
-			}
-			rendering--;
+			new Thread(() -> {
+				try {
+					Thread.sleep(200); // frame delay
+				} catch (InterruptedException e) {
+				}
+				rendering--;
+			}).start();
 		});
 	}
 
@@ -115,7 +122,7 @@ class VideoCaptureVnc extends Thread {
 				client.stop();
 				client.start(ip, Integer.parseInt(port));
 				// (new Thread(MakiDesktop.audioPlayer)).start();
-				while (this.running && !displayInfo.paused) {
+				while (this.running && !displayInfo.paused && client.isRunning()) {
 					// if (!MakiDesktop.audioPlayer.isEnabled()) (new Thread(MakiDesktop.audioPlayer)).start();
 					try {
 						Thread.sleep(100);
@@ -124,7 +131,7 @@ class VideoCaptureVnc extends Thread {
 				}
 				// MakiDesktop.audioPlayer.stopIt();
 				if (!this.running) break;
-				client.stop();
+				if (client.isRunning()) client.stop();
 			}
 			do {
 				//sleep for some time
@@ -137,11 +144,12 @@ class VideoCaptureVnc extends Thread {
 	}
 
 	public void cleanup() {
-		client.stop();
+		if (client.isRunning()) client.stop();
 		running = false;
 	}
 
 	public void clickMouse(double x, double y, int doClick, boolean drag) {
+		if (!client.isRunning()) return;
 		if (x < 0 && y < 0) {
 			cachex += x + 32767;
 			cachey += y + 32767;
@@ -1055,18 +1063,21 @@ class VideoCaptureVnc extends Thread {
 	}
 
 	public void pressKey(String key) {
+		if (!client.isRunning()) return;
 		int keynum = keyNameToKeySym(key);
 		if (keynum == -1) return;
 		client.type(keynum);
 	}
 
 	public void pressKey(String key, boolean state) {
+		if (!client.isRunning()) return;
 		int keynum = keyNameToKeySym(key);
 		if (keynum == -1) return;
 		client.updateKey(keynum, state);
 	}
 
 	public void holdKey(String key, int time) {
+		if (!client.isRunning()) return;
 		int keynum = keyNameToKeySym(key);
 		if (keynum == -1) return;
 		client.updateKey(keynum, true);
@@ -1082,6 +1093,7 @@ class VideoCaptureVnc extends Thread {
 	HashMap<Integer, Thread> keysHeld = new HashMap<>();
 
 	public void holdKey(String key) {
+		if (!client.isRunning()) return;
 		int keynum = keyNameToKeySym(key);
 		if (keynum == -1) return;
 		if (keysHeld.containsKey(keynum)) {
@@ -1102,6 +1114,7 @@ class VideoCaptureVnc extends Thread {
 	}
 
 	public void typeText(String text) {
+		if (!client.isRunning()) return;
 		client.type(text);
 	}
 }
