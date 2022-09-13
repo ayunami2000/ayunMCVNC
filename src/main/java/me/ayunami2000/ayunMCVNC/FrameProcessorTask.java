@@ -1,12 +1,10 @@
 package me.ayunami2000.ayunMCVNC;
 
-import com.google.common.collect.EvictingQueue;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.util.Queue;
 
 import static me.ayunami2000.ayunMCVNC.dither.DitherLookupUtil.COLOR_MAP;
 import static me.ayunami2000.ayunMCVNC.dither.DitherLookupUtil.FULL_COLOR_MAP;
@@ -14,7 +12,6 @@ import static me.ayunami2000.ayunMCVNC.dither.DitherLookupUtil.FULL_COLOR_MAP;
 class FrameProcessorTask extends BukkitRunnable {
 
 	private final Object lock = new Object();
-	private final Queue<byte[][]> frameBuffers = EvictingQueue.create(450);
 	private final int mapSize;
 
 	private final byte[] ditheredFrameData;
@@ -31,10 +28,6 @@ class FrameProcessorTask extends BukkitRunnable {
 		this.ditheredFrameData = new byte[mapSize * 128 * 128];
 		this.ditherBuffer = new int[2][frameWidth << 2];
 		this.cachedMapData = new byte[mapSize][];
-	}
-
-	public Queue<byte[][]> getFrameBuffers() {
-		return frameBuffers;
 	}
 
 	private void ditherFrame() {
@@ -165,8 +158,8 @@ class FrameProcessorTask extends BukkitRunnable {
 			if (frame == null) {
 				return;
 			}
-			if (frame.getWidth() != displayInfo.width * 128 || frame.getHeight() != 128 * (int) Math.ceil(displayInfo.width / (double) displayInfo.mapIds.size())) {
-				frame = resize(frame, displayInfo.width * 128, (int) Math.ceil(displayInfo.width / (double) displayInfo.mapIds.size()));//also changes type
+			if (frame.getWidth() != displayInfo.width * 128 || frame.getHeight() != 128 * (int) Math.ceil(displayInfo.mapIds.size() / (double) displayInfo.width)) {
+				frame = resize(frame, 128 * displayInfo.width, 128 * (int) Math.ceil(displayInfo.mapIds.size() / (double) displayInfo.width)); // also changes type
 			} else if (frame.getType() != BufferedImage.TYPE_3BYTE_BGR) {
 				frame = changeType(frame);
 			}
@@ -179,14 +172,14 @@ class FrameProcessorTask extends BukkitRunnable {
 				buffers[partId] = getMapData(partId, frameWidth);
 			}
 
-			frameBuffers.offer(buffers);
+			FramePacketSender.frameBuffers.offer(new FrameItem(displayInfo, buffers));
 		}
 	}
 
 	private byte[] getMapData(int partId, int width) {
 		int offset = 0;
 		int startX = ((partId % displayInfo.width) * 128);
-		int startY = ((partId / (int) Math.ceil(displayInfo.width / (double) displayInfo.mapIds.size())) * 128);
+		int startY = ((partId / displayInfo.width) * 128);
 		int maxY = startY + 128;
 		int maxX = startX + 128;
 

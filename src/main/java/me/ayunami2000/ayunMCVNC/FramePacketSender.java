@@ -1,48 +1,68 @@
 package me.ayunami2000.ayunMCVNC;
 
+import com.google.common.collect.EvictingQueue;
 import net.minecraft.server.v1_12_R1.PacketPlayOutMap;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
 
-class FramePacketSender extends BukkitRunnable implements Listener {
+class FramePacketSender extends BukkitRunnable {
 	private long frameNumber = 0;
-	private final Queue<byte[][]> frameBuffers;
+	public static final Queue<FrameItem> frameBuffers = EvictingQueue.create(4500);
 
-	public FramePacketSender(Queue<byte[][]> frameBuffers) {
-		this.frameBuffers = frameBuffers;
-		Main.plugin.getServer().getPluginManager().registerEvents(this, Main.plugin);
+	public FramePacketSender() {
 	}
 
 	@Override
 	public void run() {
-		byte[][] buffers = frameBuffers.poll();
-		if (buffers == null) {
+		FrameItem frameItem = frameBuffers.poll();
+		if (frameItem == null) {
 			return;
 		}
+		byte[][] buffers = frameItem.frameBuffer;
 		// todo: only send if within certain distance...?
-		List<PacketPlayOutMap> packets = new ArrayList<>(DisplayInfo.screenParts.size());
-		for (ScreenPart screenPart : DisplayInfo.screenParts) {
-			byte[] buffer = buffers[screenPart.partId];
+		List<PacketPlayOutMap> packets = new ArrayList<>(frameItem.display.mapIds.size());
+		int numMaps = frameItem.display.mapIds.size();
+		for (int i = 0; i < numMaps; i++) {
+			byte[] buffer = buffers[i];
+			int mapId = frameItem.display.mapIds.get(i);
 			if (buffer != null) {
-				PacketPlayOutMap packet = getPacket(screenPart.mapId, buffer);
-				if (!screenPart.modified) {
+				PacketPlayOutMap packet = getPacket(mapId, buffer);
+				boolean modified = DisplayInfo.screenPartModified.contains(mapId);;
+				if (!modified) {
 					packets.add(0, packet);
 				} else {
 					packets.add(packet);
 				}
-				screenPart.modified = true;
-				screenPart.lastFrameBuffer = buffer;
+				DisplayInfo.screenPartModified.add(mapId);
 			} else {
-				screenPart.modified = false;
+				DisplayInfo.screenPartModified.remove(mapId);
+			}
+		}
+		Collection<DisplayInfo> displays = DisplayInfo.displays.values();
+		for (DisplayInfo displayInfo : displays) {
+			for (int i = 0; i < displayInfo.mapIds.size(); i++) {
+				byte[] buffer = buffers[i];
+				int mapId = frameItem.display.mapIds.get(i);
+				if (buffer != null) {
+					PacketPlayOutMap packet = getPacket(mapId, buffer);
+					boolean modified = DisplayInfo.screenPartModified.contains(mapId);;
+					if (!modified) {
+						packets.add(0, packet);
+					} else {
+						packets.add(packet);
+					}
+					DisplayInfo.screenPartModified.add(mapId);
+				} else {
+					DisplayInfo.screenPartModified.remove(mapId);
+				}
 			}
 		}
 
@@ -51,33 +71,13 @@ class FramePacketSender extends BukkitRunnable implements Listener {
 		}
 
 		if (frameNumber % 300 == 0) {
-			byte[][] peek = frameBuffers.peek();
+			FrameItem peek = frameBuffers.peek();
 			if (peek != null) {
 				frameBuffers.clear();
 				frameBuffers.offer(peek);
 			}
 		}
 		frameNumber++;
-	}
-
-	@EventHandler
-	public void onPlayerJoin(PlayerJoinEvent event) {
-		//do i REALLY need this to be added to the task list? disabled for now...
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				List<PacketPlayOutMap> packets = new ArrayList<>();
-				for (ScreenPart screenPart : DisplayInfo.screenParts) {
-					if (screenPart.lastFrameBuffer != null) {
-						//this SHOULD work but it doesn't lol
-						packets.add(getPacket(screenPart.mapId, screenPart.lastFrameBuffer));
-					}
-				}
-				sendToPlayer(event.getPlayer(), packets);
-				//todo: maybe remove from task list once we get here?
-			}
-		}.runTaskLater(Main.plugin, 10);
-		//MakiDesktop.tasks.add(task);
 	}
 
 	private void sendToPlayer(Player player, List<PacketPlayOutMap> packets) {
@@ -94,25 +94,8 @@ class FramePacketSender extends BukkitRunnable implements Listener {
 			throw new NullPointerException("data is null");
 		}
 		return new PacketPlayOutMap(
-				mapId, (byte) 0, false, null,
-				data, 0, 0, 0, 0);
-		/*
-		this.colors = new byte[16384];
-		int i = (128 - short0) / 2;
-		int j = (128 - short1) / 2;
-
-		for(int k = 0; k < short1; ++k) {
-			int l = k + j;
-			if (l >= 0 || l < 128) {
-				for(int i1 = 0; i1 < short0; ++i1) {
-					int j1 = i1 + i;
-					if (j1 >= 0 || j1 < 128) {
-						this.colors[j1 + l * 128] = abyte[i1 + k * short0];
-					}
-				}
-			}
-		}
-		*/
+				mapId, (byte) 0, false, new HashSet<>(),
+				data, 0, 0, 128, 128);
 	}
 }
 

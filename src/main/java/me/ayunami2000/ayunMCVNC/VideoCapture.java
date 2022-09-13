@@ -139,7 +139,6 @@ class VideoCaptureVnc extends Thread {
 	public void cleanup() {
 		client.stop();
 		running = false;
-		Thread.currentThread().interrupt();//will THIS work???????
 	}
 
 	public void clickMouse(double x, double y, int doClick, boolean drag) {
@@ -1115,7 +1114,7 @@ public class VideoCapture extends Thread {
 
 	public VideoCapture(DisplayInfo displayInfo) {
 		this.width = displayInfo.width;
-		this.height = (int) Math.ceil(displayInfo.width / (double) displayInfo.mapIds.size());
+		this.height = (int) Math.ceil(displayInfo.mapIds.size() / (double) displayInfo.width);
 
 
 		videoCaptureVnc = new VideoCaptureVnc() {

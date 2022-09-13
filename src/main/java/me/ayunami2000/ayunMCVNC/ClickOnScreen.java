@@ -26,7 +26,7 @@ public class ClickOnScreen {
 		for (DisplayInfo display : displays) {
 			if (display.paused) continue;
 			// note: when setting yaw, always ensure it is NOT negative!!
-			Vector endLoc = new Vector(display.location.getX() + (display.location.getYaw() == 270 ? 1 : (display.location.getYaw() == 90 ? -1 : 0)), display.location.getY() - Math.ceil((double) display.width / (double) display.mapIds.size()), display.location.getZ() + ((display.location.getYaw() == 0 || display.location.getYaw() == 360) ? 1 : (display.location.getYaw() == 180 ? -1 : 0)));
+			Vector endLoc = new Vector(display.location.getX() + (display.location.getYaw() == 270 ? 1 : (display.location.getYaw() == 90 ? -1 : 0)), display.location.getY() - Math.ceil(display.mapIds.size() / (double) display.width), display.location.getZ() + ((display.location.getYaw() == 0 || display.location.getYaw() == 360) ? 1 : (display.location.getYaw() == 180 ? -1 : 0)));
 			if (numBetween(block.getX(), display.location.getX(), endLoc.getX()) && numBetween(block.getY(), display.location.getY(), endLoc.getY()) && numBetween(block.getZ(), display.location.getZ(), endLoc.getZ())) {
 				Location plyrloc = player.getLocation();
 				float yaw = plyrloc.getYaw();

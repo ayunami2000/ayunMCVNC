@@ -2,15 +2,12 @@ package me.ayunami2000.ayunMCVNC;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.plugin.PluginManager;
@@ -39,6 +36,9 @@ public class Main extends JavaPlugin implements Listener {
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvents(this, this);
 		pm.registerEvents(new ScreenClickEvent(), this);
+
+		FramePacketSender framePacketSender = new FramePacketSender();
+		Main.tasks.add(framePacketSender.runTaskTimerAsynchronously(Main.plugin, 0, 1));
 	}
 
 	@Override
@@ -56,7 +56,10 @@ public class Main extends JavaPlugin implements Listener {
 		if (!command.getName().equals("mcvnc")) return false;
 		boolean console = sender instanceof ConsoleCommandSender;
 		boolean op = sender.isOp();
-		if (!op && !console) return true;
+		if (!op && !console) {
+			sender.sendMessage("Error: You do not have permission to use this command!");
+			return true;
+		}
 		String firstArg = args.length == 0 ? "" : args[0];
 		switch (firstArg) {
 			case "create":
@@ -112,6 +115,10 @@ public class Main extends JavaPlugin implements Listener {
 				sender.sendMessage("Display successfully created! UUID: " + displayInfo.uuid.toString());
 				return true;
 			case "delete":
+				if (args.length < 2) {
+					sender.sendMessage("Usage: /mcvnc delete <uuid>");
+					return true;
+				}
 				DisplayInfo displayInfoo = DisplayInfo.displays.getOrDefault(UUID.fromString(args[1]), null);
 				if (displayInfoo == null) {
 					sender.sendMessage("Error: Invalid display!");
@@ -229,7 +236,7 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				return true;
 			default:
-				sender.sendMessage("usage:\n/mcvnc [create|delete|list|cb|type|key|press] [...]");
+				sender.sendMessage("usage: /mcvnc [create|delete|list|cb|type|key|press] [...]");
 		}
 		return true;
 	}
