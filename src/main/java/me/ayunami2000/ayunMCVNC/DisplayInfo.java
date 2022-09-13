@@ -2,6 +2,7 @@ package me.ayunami2000.ayunMCVNC;
 
 import org.bukkit.Location;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Vector;
 
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ public class DisplayInfo {
 	public boolean keys;
 	public boolean audio;
 	public Location location; // top left corner
+	public Location locEnd; // bottom right corner
 	public int width;
 	public String vnc;
 	public boolean paused;
@@ -43,6 +45,8 @@ public class DisplayInfo {
 		this.vnc = vnc;
 		this.paused = paused;
 
+		this.setEndLoc();
+
 		displays.put(this.uuid, this);
 
 		this.videoCapture = new VideoCapture(this);
@@ -50,6 +54,27 @@ public class DisplayInfo {
 
 		FrameProcessorTask frameProcessorTask = new FrameProcessorTask(this, this.mapIds.size(), this.width);
 		Main.tasks.add(task1 = frameProcessorTask.runTaskTimerAsynchronously(Main.plugin, 0, 1));
+	}
+
+	public void setEndLoc() {
+		float yaw = this.location.getYaw();
+
+		Vector tmpDir = new Vector(0, 0, 0);
+		if (yaw < 45 || yaw >= 315) {
+			//south
+			tmpDir = new Vector(0, 0, 1);
+		} else if (yaw < 135) {
+			//west
+			tmpDir = new Vector(-1, 0, 0);
+		} else if (yaw < 225) {
+			//north
+			tmpDir = new Vector(0, 0, -1);
+		} else if (yaw < 315) {
+			//east
+			tmpDir = new Vector(1, 0, 0);
+		}
+
+		this.locEnd = this.location.clone().add(Main.rotateVectorCC(tmpDir, new Vector(0, 1, 0), -Math.PI / 2.0).multiply(this.width - 1).add(new Vector(0, 1 - this.mapIds.size() / this.width, 0)));
 	}
 
 	public void delete() {

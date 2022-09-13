@@ -25,12 +25,9 @@ public class ClickOnScreen {
 		Collection<DisplayInfo> displays = DisplayInfo.displays.values();
 		for (DisplayInfo display : displays) {
 			if (display.paused) continue;
-			float dYaw = ImageManager.fixYaw(display.location.getYaw());
-			System.out.println(display.location);
-			Vector endLoc = new Vector(display.location.getX() + (dYaw == 0 ? display.width : (dYaw == 180 ? -display.width : 0)), display.location.getY() + 1 - Math.ceil(display.mapIds.size() / (double) display.width), display.location.getZ() + (dYaw == 270 ? display.width : (dYaw == 90 ? -display.width : 0)));
-			System.out.println(endLoc);
-			System.out.println(block.getLocation());
-			if (numBetween(block.getX(), display.location.getX(), endLoc.getX()) && numBetween(block.getY(), display.location.getY(), endLoc.getY()) && numBetween(block.getZ(), display.location.getZ(), endLoc.getZ())) {
+			if (!display.mouse) continue;
+			float dYaw = 90F * (Math.round(display.location.getYaw() / 90F) % 4);
+			if (numBetween(block.getX(), display.location.getX(), display.locEnd.getX()) && numBetween(block.getY(), display.location.getY(), display.locEnd.getY()) && numBetween(block.getZ(), display.location.getZ(), display.locEnd.getZ())) {
 				Location plyrloc = player.getLocation();
 				float yaw = plyrloc.getYaw();
 				while (yaw < 0) {
@@ -43,14 +40,14 @@ public class ClickOnScreen {
 					if (blockFace == numberToBlockFace[(int) (((display.location.getYaw() / 90) + 2) % 4)]) {
 						//correct block face
 						Vector exactLoc = IntersectionUtils.getIntersection(player.getEyeLocation(), block, blockFace, 0);
-						double y = 1.0 - (exactLoc.getY() - endLoc.getY()) / ((double) (display.mapIds.size() / display.width));
+						double y = 1.0 - (exactLoc.getY() - display.locEnd.getY()) / ((double) (display.mapIds.size() / display.width));
 						double x = 0;
 						if (dYaw == 0) {
 							//south -
-							x = exactLoc.getX() - endLoc.getX();
+							x = exactLoc.getX() - display.locEnd.getX();
 						} else if (dYaw == 90) {
 							//west -
-							x = exactLoc.getZ() - endLoc.getZ();
+							x = exactLoc.getZ() - display.locEnd.getZ();
 						} else if (dYaw == 180) {
 							//north +
 							x = exactLoc.getX() - display.location.getX();
@@ -65,11 +62,6 @@ public class ClickOnScreen {
 
 						y = Math.max(0, Math.min(1, y));
 						x = Math.max(0, Math.min(1, x));
-
-
-
-						player.sendMessage(x + ", " + y);
-
 
 						int slot = player.getInventory().getHeldItemSlot();
 						if (!doClick) {

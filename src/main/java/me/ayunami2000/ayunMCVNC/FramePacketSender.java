@@ -3,6 +3,7 @@ package me.ayunami2000.ayunMCVNC;
 import com.google.common.collect.EvictingQueue;
 import net.minecraft.server.v1_12_R1.PacketPlayOutMap;
 import org.bukkit.Bukkit;
+import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -35,7 +36,7 @@ class FramePacketSender extends BukkitRunnable {
 			int mapId = frameItem.display.mapIds.get(i);
 			if (buffer != null) {
 				PacketPlayOutMap packet = getPacket(mapId, buffer);
-				boolean modified = DisplayInfo.screenPartModified.contains(mapId);;
+				boolean modified = DisplayInfo.screenPartModified.contains(mapId);
 				if (!modified) {
 					packets.add(0, packet);
 				} else {
@@ -46,6 +47,8 @@ class FramePacketSender extends BukkitRunnable {
 				DisplayInfo.screenPartModified.remove(mapId);
 			}
 		}
+		// notice: below doesnt work for multiple displays... (bc of use of buffers[i])
+		/*
 		Collection<DisplayInfo> displays = DisplayInfo.displays.values();
 		for (DisplayInfo displayInfo : displays) {
 			for (int i = 0; i < displayInfo.mapIds.size(); i++) {
@@ -53,7 +56,7 @@ class FramePacketSender extends BukkitRunnable {
 				int mapId = frameItem.display.mapIds.get(i);
 				if (buffer != null) {
 					PacketPlayOutMap packet = getPacket(mapId, buffer);
-					boolean modified = DisplayInfo.screenPartModified.contains(mapId);;
+					boolean modified = DisplayInfo.screenPartModified.contains(mapId);
 					if (!modified) {
 						packets.add(0, packet);
 					} else {
@@ -65,6 +68,7 @@ class FramePacketSender extends BukkitRunnable {
 				}
 			}
 		}
+		*/
 
 		for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
 			sendToPlayer(onlinePlayer, packets);

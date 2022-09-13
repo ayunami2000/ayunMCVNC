@@ -2,6 +2,7 @@ package me.ayunami2000.ayunMCVNC;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -12,7 +13,9 @@ import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +41,19 @@ public class Main extends JavaPlugin implements Listener {
 		pm.registerEvents(new ScreenClickEvent(), this);
 
 		FramePacketSender framePacketSender = new FramePacketSender();
-		Main.tasks.add(framePacketSender.runTaskTimerAsynchronously(Main.plugin, 0, 1));
+		Main.tasks.add(framePacketSender.runTaskTimerAsynchronously(this, 0, 1));
+
+		Main.tasks.add(new BukkitRunnable() {
+			@Override
+			public void run() {
+				// todo: check if this is laggy when lots of players
+				Collection<? extends Player> players = Main.this.getServer().getOnlinePlayers();
+				for (Player player : players) {
+					Block tgtbl = player.getTargetBlock(null, 5);
+					if (tgtbl != null) ClickOnScreen.clickedOnBlock(tgtbl, player, false);
+				}
+			}
+		}.runTaskTimerAsynchronously(this, 0, 10));
 	}
 
 	@Override
@@ -66,7 +81,7 @@ public class Main extends JavaPlugin implements Listener {
 				// width
 				// height
 				// dither
-				// mouse (todo: actually use)
+				// mouse
 				// keys (todo: actually use)
 				// audio (todo: implement)
 				// ip:port
@@ -98,7 +113,7 @@ public class Main extends JavaPlugin implements Listener {
 
 				boolean paused = args.length < 9 ? false : Boolean.parseBoolean(args[8]);
 
-				List<Integer> mapIds = new ArrayList<>();
+				List<Integer> mapIds = new ArrayList<>(width * height);
 
 				for (int i = 0; i < width * height; i++) {
 					MapView mapView = getServer().createMap(loc.getWorld());
@@ -242,5 +257,22 @@ public class Main extends JavaPlugin implements Listener {
 				sender.sendMessage("usage: /mcvnc [create|delete|list|cb|type|key|press] [...]");
 		}
 		return true;
+	}
+
+	public static Vector rotateVectorCC(Vector vec, Vector axis, double theta){
+		double x, y, z;
+		double u, v, w;
+		x=vec.getX();y=vec.getY();z=vec.getZ();
+		u=axis.getX();v=axis.getY();w=axis.getZ();
+		double xPrime = u*(u*x + v*y + w*z)*(1d - Math.cos(theta))
+				+ x*Math.cos(theta)
+				+ (-w*y + v*z)*Math.sin(theta);
+		double yPrime = v*(u*x + v*y + w*z)*(1d - Math.cos(theta))
+				+ y*Math.cos(theta)
+				+ (w*x - u*z)*Math.sin(theta);
+		double zPrime = w*(u*x + v*y + w*z)*(1d - Math.cos(theta))
+				+ z*Math.cos(theta)
+				+ (-v*x + u*y)*Math.sin(theta);
+		return new Vector(xPrime, yPrime, zPrime);
 	}
 }

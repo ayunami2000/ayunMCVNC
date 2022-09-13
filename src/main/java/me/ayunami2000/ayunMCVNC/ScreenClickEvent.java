@@ -35,11 +35,4 @@ public class ScreenClickEvent implements Listener {
 			}
 		}
 	}
-
-	@EventHandler(priority = EventPriority.MONITOR)
-	public void onMove(PlayerMoveEvent event) {
-		Player player = event.getPlayer();
-		Block tgtbl = player.getTargetBlock(null, 5);
-		if (tgtbl != null) ClickOnScreen.clickedOnBlock(tgtbl, player, false);
-	}
 }
