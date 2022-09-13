@@ -8,8 +8,8 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.util.Queue;
 
-import static me.ayunami2000.MakiDesktop.dither.DitherLookupUtil.COLOR_MAP;
-import static me.ayunami2000.MakiDesktop.dither.DitherLookupUtil.FULL_COLOR_MAP;
+import static me.ayunami2000.ayunMCVNC.dither.DitherLookupUtil.COLOR_MAP;
+import static me.ayunami2000.ayunMCVNC.dither.DitherLookupUtil.FULL_COLOR_MAP;
 
 class FrameProcessorTask extends BukkitRunnable {
 
