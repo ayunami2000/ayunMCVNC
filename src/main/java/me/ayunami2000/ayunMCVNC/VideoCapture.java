@@ -3,14 +3,22 @@ package me.ayunami2000.ayunMCVNC;
 import com.shinyhut.vernacular.client.VernacularClient;
 import com.shinyhut.vernacular.client.VernacularConfig;
 import com.shinyhut.vernacular.client.rendering.ColorDepth;
+import jlibrtp.DataFrame;
+import jlibrtp.Participant;
+import jlibrtp.RTPAppIntf;
+import jlibrtp.RTPSession;
 import me.ayunami2000.ayunMCVNC.MJPG.MjpegFrame;
 import me.ayunami2000.ayunMCVNC.MJPG.MjpegInputStream;
 
+import javax.imageio.ImageIO;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.DatagramSocket;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -18,14 +26,6 @@ import java.util.regex.Pattern;
 
 class VideoCaptureBase extends Thread {
 	public DisplayInfo displayInfo;
-
-	public void cleanup() {
-
-	}
-}
-
-class VideoCaptureMjpeg extends VideoCaptureBase {
-	public boolean running = true;
 
 	public void onFrame(BufferedImage frame) {
 	}
@@ -46,6 +46,83 @@ class VideoCaptureMjpeg extends VideoCaptureBase {
 		// Return the buffered image
 		return bimage;
 	}
+
+	public void cleanup() {
+
+	}
+}
+
+class VideoCaptureRTP extends VideoCaptureBase implements RTPAppIntf {
+	public boolean running = true;
+
+	private RTPSession rtpSession = null;
+
+	@Override
+	public void run() {
+		while (this.isAlive() && this.running) {
+			String currUrl = displayInfo.dest;
+			try {
+				DatagramSocket rtpSocket = new DatagramSocket(1337);
+				DatagramSocket rtcpSocket = new DatagramSocket(1338);
+				rtpSession = new RTPSession(rtpSocket, rtcpSocket);
+				rtpSession.RTPSessionRegister(this, null, null);
+			} catch (IOException e) {
+			}
+			if (!this.running) break;
+			if (displayInfo.paused || currUrl.equals(displayInfo.dest)) {
+				do {
+					try {
+						Thread.sleep(displayInfo.paused ? 1000 : 10000);
+					} catch (InterruptedException e) {
+					}
+				} while (displayInfo.paused && this.running);
+			}
+		}
+	}
+
+	@Override
+	public void cleanup() {
+		running = false;
+		if (rtpSession != null) rtpSession.endSession();
+	}
+
+	@Override
+	public void receiveData(DataFrame frame, Participant participant) {
+		switch (frame.payloadType()) {
+			case 26:
+				// jpeg
+				byte[] data = frame.getConcatenatedData();
+				if (data.length == 0) break;
+				InputStream is = new ByteArrayInputStream(data);
+
+				try {
+					onFrame(toBufferedImage(ImageIO.read(is)));
+				} catch (IOException e) {
+				}
+
+				break;
+			case 0:
+				// pcm
+
+				break;
+			default:
+				// unsupported data format
+		}
+	}
+
+	@Override
+	public void userEvent(int type, Participant[] participant) {
+		// nothing
+	}
+
+	@Override
+	public int frameSize(int payloadType) {
+		return 1;
+	}
+}
+
+class VideoCaptureMjpeg extends VideoCaptureBase {
+	public boolean running = true;
 
 	public void run() {
 		while (this.isAlive() && this.running) {
@@ -87,9 +164,6 @@ class VideoCaptureVnc extends VideoCaptureBase {
 	public boolean running = true;
 	private boolean mouseDown = false;
 
-	public void onFrame(BufferedImage frame) {
-	}
-
 	private Pattern ipPortPattern = Pattern.compile("([^:]+):?([0-9]{1,5})?");
 	private VernacularConfig config = new VernacularConfig();
 	private VernacularClient client = new VernacularClient(config);
@@ -98,43 +172,6 @@ class VideoCaptureVnc extends VideoCaptureBase {
 	private int rendering = 0;
 	private int cachex = 0;
 	private int cachey = 0;
-
-	// private static final int[] colorOrder = new int[] { 0, 1, 2, 3 };
-
-	public static BufferedImage toBufferedImage(Image img) {
-		if (img instanceof BufferedImage/* && colorOrder[0] == 0 && colorOrder[1] == 1 && colorOrder[2] == 2 && colorOrder[3] == 3*/) {
-			return (BufferedImage) img;
-		}
-
-		// Create a buffered image with transparency
-		BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-
-		// Draw the image on to the buffered image
-		Graphics2D bGr = bimage.createGraphics();
-		bGr.drawImage(img, 0, 0, null);
-
-		/*
-		if (colorOrder[0] != 0 || colorOrder[1] != 1 || colorOrder[2] != 2 || colorOrder[3] != 3) {
-			for (int i = 0; i < bimage.getWidth(); i++) {
-				for (int j = 0; j < bimage.getHeight(); j++) {
-					Color origColor = new Color(bimage.getRGB(i, j));
-					int[] oldRgb = new int[]{origColor.getRed(), origColor.getGreen(), origColor.getBlue(), origColor.getAlpha()};
-
-					int[] newRgb = new int[]{0, 0, 0, 0};
-					for (int r = 0; r < newRgb.length; r++) {
-						newRgb[r] = oldRgb[MakiDesktop.colorOrder[r]];
-					}
-					bimage.setRGB(i, j, new Color(newRgb[0], newRgb[1], newRgb[2], newRgb[3]).getRGB());
-				}
-			}
-		}
-		*/
-
-		bGr.dispose();
-
-		// Return the buffered image
-		return bimage;
-	}
 
 	{
 		config.setColorDepth(ColorDepth.BPP_24_TRUE);
@@ -1200,7 +1237,14 @@ public class VideoCapture extends Thread {
 		this.width = displayInfo.width;
 		this.height = (int) Math.ceil(displayInfo.mapIds.size() / (double) displayInfo.width);
 
-		if (displayInfo.mjpeg) {
+		if (displayInfo.vnc) {
+			videoCapture = new VideoCaptureVnc() {
+				@Override
+				public void onFrame(BufferedImage frame) {
+					displayInfo.currentFrame = frame;
+				}
+			};
+		} else if (displayInfo.dest.toLowerCase().startsWith("http:") || displayInfo.dest.toLowerCase().startsWith("https:")) {
 			videoCapture = new VideoCaptureMjpeg() {
 				@Override
 				public void onFrame(BufferedImage frame) {
@@ -1208,7 +1252,7 @@ public class VideoCapture extends Thread {
 				}
 			};
 		} else {
-			videoCapture = new VideoCaptureVnc() {
+			videoCapture = new VideoCaptureRTP() {
 				@Override
 				public void onFrame(BufferedImage frame) {
 					displayInfo.currentFrame = frame;

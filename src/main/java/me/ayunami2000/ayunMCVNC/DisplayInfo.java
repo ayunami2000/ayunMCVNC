@@ -3,7 +3,6 @@ package me.ayunami2000.ayunMCVNC;
 import org.bukkit.Location;
 import org.bukkit.command.BlockCommandSender;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
@@ -28,7 +27,7 @@ public class DisplayInfo {
 	public final String name;
 	public boolean dither;
 	public boolean mouse;
-	public boolean mjpeg;
+	public boolean vnc;
 	public boolean audio;
 	public Location location; // top left corner
 	public Location locEnd; // bottom right corner
@@ -40,12 +39,12 @@ public class DisplayInfo {
 	public VideoCapture videoCapture;
 	private final BukkitTask task1;
 
-	public DisplayInfo(String name, List<Integer> mapIds, boolean dither, boolean mouse, boolean mjpeg, boolean audio, Location location, int width, String dest, boolean paused) {
+	public DisplayInfo(String name, List<Integer> mapIds, boolean dither, boolean mouse, boolean vnc, boolean audio, Location location, int width, String dest, boolean paused) {
 		this.name = name;
 		this.mapIds = mapIds;
 		this.dither = dither;
 		this.mouse = mouse;
-		this.mjpeg = mjpeg;
+		this.vnc = vnc;
 		this.audio = audio;
 		this.location = location;
 		this.width = width;

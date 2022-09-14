@@ -88,7 +88,7 @@ public class Main extends JavaPlugin implements Listener {
 				// ip:port
 				// paused (optional)
 				if (args.length < 9) {
-					sender.sendMessage("Usage: /mcvnc create <name> <width (e.g. 5)> <height (e.g. 4)> <dither (e.g. true)> <mouse> <mjpeg> <audio> <ip:port|url> [paused]");
+					sender.sendMessage("Usage: /mcvnc create <name> <width (e.g. 5)> <height (e.g. 4)> <dither (e.g. true)> <mouse> <vnc> <audio> <ip:port|url> [paused]");
 					return true;
 				}
 				if (!(sender instanceof Player)) {
@@ -116,7 +116,7 @@ public class Main extends JavaPlugin implements Listener {
 
 				boolean dither = Boolean.parseBoolean(args[4]);
 				boolean mouse = Boolean.parseBoolean(args[5]);
-				boolean mjpeg = Boolean.parseBoolean(args[6]);
+				boolean vnc = Boolean.parseBoolean(args[6]);
 				boolean audio = Boolean.parseBoolean(args[7]);
 
 				String dest = args[8];
@@ -139,7 +139,7 @@ public class Main extends JavaPlugin implements Listener {
 
 					mapIds.add((int) mapView.getId());
 				}
-				DisplayInfo displayInfo = new DisplayInfo(newName, mapIds, dither, mouse, mjpeg, audio, loc, width, dest, paused);
+				DisplayInfo displayInfo = new DisplayInfo(newName, mapIds, dither, mouse, vnc, audio, loc, width, dest, paused);
 				ImageManager.getInstance().saveImage(displayInfo);
 				sender.sendMessage("Display successfully created! Name: " + displayInfo.name);
 				return true;

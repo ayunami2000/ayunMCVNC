@@ -55,7 +55,7 @@ public class ImageManager implements Listener {
 			displayProperties.set("mapIds", displayInfo.mapIds);
 			displayProperties.set("dither", displayInfo.dither);
 			displayProperties.set("mouse", displayInfo.mouse);
-			displayProperties.set("mjpeg", displayInfo.mjpeg);
+			displayProperties.set("vnc", displayInfo.vnc);
 			displayProperties.set("audio", displayInfo.audio);
 			ConfigurationSection location = displayProperties.createSection("location");
 			location.set("world", displayInfo.location.getWorld().getName());
@@ -100,7 +100,7 @@ public class ImageManager implements Listener {
 				ConfigurationSection displayProperties = displays.getConfigurationSection(displayId);
 				ConfigurationSection location = displayProperties.getConfigurationSection("location");
 				Location loc = new Location(Main.plugin.getServer().getWorld(location.getString("world")), location.getInt("x"), location.getInt("y"), location.getInt("z"), location.getInt("dir") * 90F, 0);
-				new DisplayInfo(displayId, displayProperties.getIntegerList("mapIds"), displayProperties.getBoolean("dither"), displayProperties.getBoolean("mouse"), displayProperties.getBoolean("mjpeg"), displayProperties.getBoolean("audio"), loc, displayProperties.getInt("width"), displayProperties.getString("dest"), displayProperties.getBoolean("paused"));
+				new DisplayInfo(displayId, displayProperties.getIntegerList("mapIds"), displayProperties.getBoolean("dither"), displayProperties.getBoolean("mouse"), displayProperties.getBoolean("vnc"), displayProperties.getBoolean("audio"), loc, displayProperties.getInt("width"), displayProperties.getString("dest"), displayProperties.getBoolean("paused"));
 			}
 		}
 		if (getData().contains("unused")) {
