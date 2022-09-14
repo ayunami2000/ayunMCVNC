@@ -1,2 +1,4 @@
 # stores each active display
 displays: {}
+# stores unused map IDs
+unused: []

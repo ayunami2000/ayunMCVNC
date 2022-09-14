@@ -26,6 +26,7 @@ public class ClickOnScreen {
 		for (DisplayInfo display : displays) {
 			if (display.paused) continue;
 			if (!display.mouse) continue;
+			if (display.mjpeg) continue;
 			float dYaw = 90F * (Math.round(display.location.getYaw() / 90F) % 4);
 			if (numBetween(block.getX(), display.location.getX(), display.locEnd.getX()) && numBetween(block.getY(), display.location.getY(), display.locEnd.getY()) && numBetween(block.getZ(), display.location.getZ(), display.locEnd.getZ())) {
 				Location plyrloc = player.getLocation();

@@ -83,12 +83,12 @@ public class Main extends JavaPlugin implements Listener {
 				// height
 				// dither
 				// mouse
-				// keys (todo: actually use)
+				// mjpeg
 				// audio (todo: implement)
 				// ip:port
 				// paused (optional)
 				if (args.length < 9) {
-					sender.sendMessage("Usage: /mcvnc create <name> <width (e.g. 5)> <height (e.g. 4)> <dither (e.g. true)> <mouse> <keys> <audio> <ip:port> [paused]");
+					sender.sendMessage("Usage: /mcvnc create <name> <width (e.g. 5)> <height (e.g. 4)> <dither (e.g. true)> <mouse> <mjpeg> <audio> <ip:port|url> [paused]");
 					return true;
 				}
 				if (!(sender instanceof Player)) {
@@ -96,6 +96,10 @@ public class Main extends JavaPlugin implements Listener {
 					return true;
 				}
 				String newName = args[1].toLowerCase();
+				if (newName.startsWith("@")) {
+					sender.sendMessage("Error: A display's name cannot start with '@'!");
+					return true;
+				}
 				if (DisplayInfo.displays.containsKey(newName)) {
 					sender.sendMessage("Error: A display with that name already exists!");
 					return true;
@@ -112,17 +116,18 @@ public class Main extends JavaPlugin implements Listener {
 
 				boolean dither = Boolean.parseBoolean(args[4]);
 				boolean mouse = Boolean.parseBoolean(args[5]);
-				boolean keys = Boolean.parseBoolean(args[6]);
+				boolean mjpeg = Boolean.parseBoolean(args[6]);
 				boolean audio = Boolean.parseBoolean(args[7]);
 
-				String vnc = args[8];
+				String dest = args[8];
 
-				boolean paused = args.length < 9 ? false : Boolean.parseBoolean(args[9]);
+				boolean paused = args.length < 10 ? false : Boolean.parseBoolean(args[9]);
 
 				List<Integer> mapIds = new ArrayList<>(width * height);
 
 				for (int i = 0; i < width * height; i++) {
-					MapView mapView = getServer().createMap(loc.getWorld());
+					int potentialMapId = ImageManager.getInstance().reuse();
+					MapView mapView = potentialMapId == -1 ? getServer().createMap(loc.getWorld()) : getServer().getMap((short) potentialMapId);
 					mapView.setScale(MapView.Scale.CLOSEST);
 					mapView.setUnlimitedTracking(true);
 					for (MapRenderer renderer : mapView.getRenderers()) {
@@ -134,7 +139,7 @@ public class Main extends JavaPlugin implements Listener {
 
 					mapIds.add((int) mapView.getId());
 				}
-				DisplayInfo displayInfo = new DisplayInfo(newName, mapIds, dither, mouse, keys, audio, loc, width, vnc, paused);
+				DisplayInfo displayInfo = new DisplayInfo(newName, mapIds, dither, mouse, mjpeg, audio, loc, width, dest, paused);
 				ImageManager.getInstance().saveImage(displayInfo);
 				sender.sendMessage("Display successfully created! Name: " + displayInfo.name);
 				return true;
@@ -143,12 +148,12 @@ public class Main extends JavaPlugin implements Listener {
 					sender.sendMessage("Usage: /mcvnc delete <name>");
 					return true;
 				}
-				DisplayInfo displayInfoo = DisplayInfo.displays.getOrDefault(args[1], null);
+				DisplayInfo displayInfoo = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
 				if (displayInfoo == null) {
 					sender.sendMessage("Error: Invalid display!");
 				} else {
 					displayInfoo.paused = true;
-					displayInfoo.delete();
+					displayInfoo.delete(true);
 					ImageManager.getInstance().removeImage(displayInfoo.name);
 				}
 				sender.sendMessage("Display successfully deleted!");
@@ -158,7 +163,7 @@ public class Main extends JavaPlugin implements Listener {
 					sender.sendMessage("Usage: /mcvnc toggle <name>");
 					return true;
 				}
-				DisplayInfo displayInfoooo = DisplayInfo.displays.getOrDefault(args[1], null);
+				DisplayInfo displayInfoooo = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
 				if (displayInfoooo == null) {
 					sender.sendMessage("Error: Invalid display!");
 				} else {
@@ -172,7 +177,7 @@ public class Main extends JavaPlugin implements Listener {
 					sender.sendMessage("Usage: /mcvnc move <name>");
 					return true;
 				}
-				DisplayInfo displayInfooooo = DisplayInfo.displays.getOrDefault(args[1], null);
+				DisplayInfo displayInfooooo = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
 				if (displayInfooooo == null) {
 					sender.sendMessage("Error: Invalid display!");
 				} else {
@@ -194,6 +199,7 @@ public class Main extends JavaPlugin implements Listener {
 				if (displayIds.size() == 0) {
 					sender.sendMessage("(there are no displays...)");
 				} else {
+					sender.sendMessage(" -> @ (nearest display)");
 					for (String displayId : displayIds) {
 						sender.sendMessage(" -> " + displayId);
 					}
@@ -201,7 +207,7 @@ public class Main extends JavaPlugin implements Listener {
 				return true;
 			case "cb":
 				if (args.length > 2) {
-					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(args[1], null);
+					DisplayInfo displayInfooo = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
 					if (displayInfooo == null) {
 						sender.sendMessage("Error: Invalid display!");
 					} else {
@@ -239,7 +245,7 @@ public class Main extends JavaPlugin implements Listener {
 				if (args.length == 1 || args.length == 2) {
 					sender.sendMessage("Usage: /mcvnc type <name> <text>");
 				} else {
-					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(args[1], null);
+					DisplayInfo displayInfooo = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
 					if (displayInfooo == null) {
 						sender.sendMessage("Error: Invalid display!");
 					} else {
@@ -255,7 +261,7 @@ public class Main extends JavaPlugin implements Listener {
 				if (args.length == 1 || args.length == 2) {
 					sender.sendMessage("Usage: /mcvnc key <name> <keyname>\n§lWarning: Case sensitive!");
 				} else {
-					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(args[1], null);
+					DisplayInfo displayInfooo = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
 					if (displayInfooo == null) {
 						sender.sendMessage("Error: Invalid display!");
 					} else {
@@ -274,7 +280,7 @@ public class Main extends JavaPlugin implements Listener {
 				if (args.length == 1 || args.length == 2 || args.length == 3) {
 					sender.sendMessage("Usage: /mcvnc keystate <name> <down|up> <keyname>\n§lWarning: Case sensitive!");
 				} else {
-					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(args[1], null);
+					DisplayInfo displayInfooo = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
 					if (displayInfooo == null) {
 						sender.sendMessage("Error: Invalid display!");
 					} else {
@@ -294,7 +300,7 @@ public class Main extends JavaPlugin implements Listener {
 				if (args.length == 1 || args.length == 2 || args.length == 3) {
 					sender.sendMessage("Usage: /mcvnc press <name> <duration> <keyname>\n§lWarning: Case sensitive!");
 				} else {
-					DisplayInfo displayInfooo = DisplayInfo.displays.getOrDefault(args[1], null);
+					DisplayInfo displayInfooo = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
 					if (displayInfooo == null) {
 						sender.sendMessage("Error: Invalid display!");
 					} else {

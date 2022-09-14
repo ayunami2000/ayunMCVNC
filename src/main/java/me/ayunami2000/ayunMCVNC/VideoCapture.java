@@ -3,22 +3,94 @@ package me.ayunami2000.ayunMCVNC;
 import com.shinyhut.vernacular.client.VernacularClient;
 import com.shinyhut.vernacular.client.VernacularConfig;
 import com.shinyhut.vernacular.client.rendering.ColorDepth;
+import me.ayunami2000.ayunMCVNC.MJPG.MjpegFrame;
+import me.ayunami2000.ayunMCVNC.MJPG.MjpegInputStream;
 
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class VideoCaptureVnc extends Thread {
+class VideoCaptureBase extends Thread {
+	public DisplayInfo displayInfo;
+
+	public void cleanup() {
+
+	}
+}
+
+class VideoCaptureMjpeg extends VideoCaptureBase {
+	public boolean running = true;
+
+	public void onFrame(BufferedImage frame) {
+	}
+
+	public static BufferedImage toBufferedImage(Image img) {
+		if (img instanceof BufferedImage) {
+			return (BufferedImage) img;
+		}
+
+		// Create a buffered image with transparency
+		BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+
+		// Draw the image on to the buffered image
+		Graphics2D bGr = bimage.createGraphics();
+		bGr.drawImage(img, 0, 0, null);
+		bGr.dispose();
+
+		// Return the buffered image
+		return bimage;
+	}
+
+	public void run() {
+		while (this.isAlive() && this.running) {
+			String currUrl = displayInfo.dest;
+			try {
+				MjpegInputStream in = new MjpegInputStream(new URL(currUrl).openStream());
+
+				MjpegFrame frame = null;
+
+				try {
+					while (this.running && !displayInfo.paused && (frame = in.readMjpegFrame()) != null) {
+						onFrame(toBufferedImage(frame.getImage()));
+						if (!currUrl.equals(displayInfo.dest)) in.close();
+					}
+				} catch (EOFException e) {
+				}
+				in.close();
+			} catch (IOException e) {
+			}
+			if (!this.running) break;
+			if (displayInfo.paused || currUrl.equals(displayInfo.dest)) {
+				do {
+					try {
+						Thread.sleep(displayInfo.paused ? 1000 : 10000);
+					} catch (InterruptedException e) {
+					}
+				} while (displayInfo.paused && this.running);
+			}
+		}
+	}
+
+	@Override
+	public void cleanup() {
+		running = false;
+	}
+}
+
+class VideoCaptureVnc extends VideoCaptureBase {
 	public boolean running = true;
 	private boolean mouseDown = false;
 
 	public void onFrame(BufferedImage frame) {
 	}
 
-	private static Pattern ipPortPattern = Pattern.compile("([^:]+):?([0-9]{1,5})?");
+	private Pattern ipPortPattern = Pattern.compile("([^:]+):?([0-9]{1,5})?");
 	private VernacularConfig config = new VernacularConfig();
 	private VernacularClient client = new VernacularClient(config);
 	private int screenWidth = 0;
@@ -26,8 +98,6 @@ class VideoCaptureVnc extends Thread {
 	private int rendering = 0;
 	private int cachex = 0;
 	private int cachey = 0;
-
-	public DisplayInfo displayInfo;
 
 	// private static final int[] colorOrder = new int[] { 0, 1, 2, 3 };
 
@@ -112,7 +182,7 @@ class VideoCaptureVnc extends Thread {
 
 	public void run() {
 		while (this.isAlive() && this.running) {
-			Matcher m = ipPortPattern.matcher(displayInfo.vnc);
+			Matcher m = ipPortPattern.matcher(displayInfo.dest);
 			if (!m.find()) {
 				System.out.println("Error: Expected IP:PORT");
 				displayInfo.paused = true;
@@ -143,6 +213,7 @@ class VideoCaptureVnc extends Thread {
 		}
 	}
 
+	@Override
 	public void cleanup() {
 		if (client.isRunning()) client.stop();
 		running = false;
@@ -1123,51 +1194,72 @@ public class VideoCapture extends Thread {
 	public int width;
 	public int height;
 
-	VideoCaptureVnc videoCaptureVnc;
+	VideoCaptureBase videoCapture;
 
 	public VideoCapture(DisplayInfo displayInfo) {
 		this.width = displayInfo.width;
 		this.height = (int) Math.ceil(displayInfo.mapIds.size() / (double) displayInfo.width);
 
+		if (displayInfo.mjpeg) {
+			videoCapture = new VideoCaptureMjpeg() {
+				@Override
+				public void onFrame(BufferedImage frame) {
+					displayInfo.currentFrame = frame;
+				}
+			};
+		} else {
+			videoCapture = new VideoCaptureVnc() {
+				@Override
+				public void onFrame(BufferedImage frame) {
+					displayInfo.currentFrame = frame;
+				}
+			};
+		}
 
-		videoCaptureVnc = new VideoCaptureVnc() {
-			@Override
-			public void onFrame(BufferedImage frame) {
-				displayInfo.currentFrame = frame;
-			}
-		};
-		videoCaptureVnc.displayInfo = displayInfo;
+		videoCapture.displayInfo = displayInfo;
 
-		videoCaptureVnc.start();
+		videoCapture.start();
 
 	}
 
 	public void cleanup() {
-		videoCaptureVnc.cleanup();
+		videoCapture.cleanup();
 	}
 
 	public void clickMouse(double x, double y, int doClick, boolean drag) {
-		videoCaptureVnc.clickMouse(x, y, doClick, drag);
+		if (videoCapture instanceof VideoCaptureVnc) {
+			((VideoCaptureVnc) videoCapture).clickMouse(x, y, doClick, drag);
+		}
 	}
 
 	public void pressKey(String key) {
-		videoCaptureVnc.pressKey(key);
+		if (videoCapture instanceof VideoCaptureVnc) {
+			((VideoCaptureVnc) videoCapture).pressKey(key);
+		}
 	}
 
 	public void pressKey(String key, boolean state) {
-		videoCaptureVnc.pressKey(key, state);
+		if (videoCapture instanceof VideoCaptureVnc) {
+			((VideoCaptureVnc) videoCapture).pressKey(key, state);
+		}
 	}
 
 	public void holdKey(String key, int time) {
-		videoCaptureVnc.holdKey(key, time);
+		if (videoCapture instanceof VideoCaptureVnc) {
+			((VideoCaptureVnc) videoCapture).holdKey(key, time);
+		}
 	}
 
 	public void holdKey(String key) {
-		videoCaptureVnc.holdKey(key);
+		if (videoCapture instanceof VideoCaptureVnc) {
+			((VideoCaptureVnc) videoCapture).holdKey(key);
+		}
 	}
 
 	public void typeText(String text) {
-		videoCaptureVnc.typeText(text);
+		if (videoCapture instanceof VideoCaptureVnc) {
+			((VideoCaptureVnc) videoCapture).typeText(text);
+		}
 	}
 }
 
