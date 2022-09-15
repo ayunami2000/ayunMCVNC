@@ -8,6 +8,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,6 +37,7 @@ public class DisplayInfo {
 	public boolean paused;
 
 	public BufferedImage currentFrame = null;
+	public ByteArrayOutputStream currentAudio = new ByteArrayOutputStream();
 	public VideoCapture videoCapture;
 	private final BukkitTask task1;
 

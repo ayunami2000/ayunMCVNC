@@ -43,6 +43,9 @@ public class Main extends JavaPlugin implements Listener {
 		FramePacketSender framePacketSender = new FramePacketSender();
 		tasks.add(framePacketSender.runTaskTimerAsynchronously(this, 0, 1));
 
+		AudioProcessorTask audioProcessorTask = new AudioProcessorTask();
+		tasks.add(audioProcessorTask.runTaskTimerAsynchronously(this, 0, 5)); // 4 times per second
+
 		tasks.add(new BukkitRunnable() {
 			@Override
 			public void run() {
@@ -152,9 +155,9 @@ public class Main extends JavaPlugin implements Listener {
 				if (displayInfoo == null) {
 					sender.sendMessage("Error: Invalid display!");
 				} else {
-					displayInfoo.paused = true;
 					displayInfoo.delete(true);
 					ImageManager.getInstance().removeImage(displayInfoo.name);
+					ImageManager.getInstance().saveData();
 				}
 				sender.sendMessage("Display successfully deleted!");
 				return true;

@@ -3,10 +3,6 @@ package me.ayunami2000.ayunMCVNC;
 import com.shinyhut.vernacular.client.VernacularClient;
 import com.shinyhut.vernacular.client.VernacularConfig;
 import com.shinyhut.vernacular.client.rendering.ColorDepth;
-import jlibrtp.DataFrame;
-import jlibrtp.Participant;
-import jlibrtp.RTPAppIntf;
-import jlibrtp.RTPSession;
 import me.ayunami2000.ayunMCVNC.MJPG.MjpegFrame;
 import me.ayunami2000.ayunMCVNC.MJPG.MjpegInputStream;
 
@@ -15,17 +11,25 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// ffmpeg -y -re -stream_loop -1 -thread_queue_size 4096 -i lagtrain.mp4 -f rawvideo -c:v mjpeg -qscale:v 16 -r 20 udp://127.0.0.1:1337 -f s16le -acodec pcm_s16le -ac 2 -ar 48000 udp://127.0.0.1:1338
+// ffplay udp://127.0.0.1:1337
+// ffplay -f s16le -acodec pcm_s16le -ac 2 -ar 48000 udp://127.0.0.1:1338
+
 class VideoCaptureBase extends Thread {
+	public boolean running = true;
+
 	public DisplayInfo displayInfo;
+	public AudioCapture audioCapture = null;
 
 	public void onFrame(BufferedImage frame) {
 	}
@@ -48,31 +52,109 @@ class VideoCaptureBase extends Thread {
 	}
 
 	public void cleanup() {
+		if (audioCapture != null) {
+			audioCapture.cleanup();
+		}
+	}
 
+	public String getDestPiece(boolean audio) {
+		return (displayInfo.audio && displayInfo.dest.contains(";")) ? (audio ? displayInfo.dest.substring(displayInfo.dest.lastIndexOf(';') + 1) : displayInfo.dest.substring(0, displayInfo.dest.lastIndexOf(';'))) : displayInfo.dest;
 	}
 }
 
-class VideoCaptureRTP extends VideoCaptureBase implements RTPAppIntf {
-	public boolean running = true;
-
-	private RTPSession rtpSession = null;
+class VideoCaptureUDPServer extends VideoCaptureBase {
+	private DatagramSocket socket;
 
 	@Override
 	public void run() {
 		while (this.isAlive() && this.running) {
-			String currUrl = displayInfo.dest;
+			int currDest = Integer.parseInt(getDestPiece(false));
 			try {
-				DatagramSocket rtpSocket = new DatagramSocket(1337);
-				DatagramSocket rtcpSocket = new DatagramSocket(1338);
-				rtpSession = new RTPSession(rtpSocket, rtcpSocket);
-				rtpSession.RTPSessionRegister(this, null, null);
+				byte[] buffer = new byte[1024 * 1024]; // 1 mb
+				socket = new DatagramSocket(currDest);
+				DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+
+				ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+				int soi = 0; // start of image / SOI
+				int eoi = 0; // end of image / EOI
+				while (this.isAlive() && running && !displayInfo.paused) {
+					socket.receive(packet);
+
+					byte[] data = packet.getData();
+
+					int length = packet.getLength();
+					for (int i = packet.getOffset(); i < length; i++) {
+						byte b = data[i];
+						switch (b) {
+							case (byte) 0xFF:
+								if (soi % 2 == 0) soi++; // find next byte
+								if (eoi == 0) eoi++;
+								break;
+							case (byte) 0xD8:
+								if (soi % 2 == 1) {
+									soi++; // first SOI found
+								}
+								if (soi == 4) {
+									// found another SOI, probably incomplete frame.
+									// discard previous data, restart with this SOI
+									output.reset();
+									output.write(0xFF);
+									soi = 2;
+								}
+								break;
+							case (byte) 0xD9:
+								if (eoi == 1) eoi++; // EOI found
+								break;
+							default:
+								// wrong byte, reset
+								if (soi == 1) soi = 0;
+								if (eoi == 1) eoi = 0;
+								if (soi == 3) soi--;
+								break;
+						}
+						output.write(b);
+						if (eoi == 2) { // image is complete
+							try {
+								ByteArrayInputStream stream = new ByteArrayInputStream(output.toByteArray());
+								BufferedImage bufferedImage = ImageIO.read(stream);
+								if (bufferedImage != null) {
+									onFrame(bufferedImage);
+								}
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+
+							// reset
+							output.reset();
+							soi = 0;
+							eoi = 0;
+						}
+					}
+
+					if (currDest != Integer.parseInt(getDestPiece(false))) {
+						if (socket != null) {
+							socket.disconnect();
+							socket.close();
+						}
+						break;
+					}
+
+				}
+				if (socket != null) {
+					socket.disconnect();
+					socket.close();
+				}
 			} catch (IOException e) {
 			}
 			if (!this.running) break;
-			if (displayInfo.paused || currUrl.equals(displayInfo.dest)) {
+			if (displayInfo.paused || currDest == Integer.parseInt(getDestPiece(false))) {
 				do {
 					try {
-						Thread.sleep(displayInfo.paused ? 1000 : 10000);
+						int sleepTime = displayInfo.paused ? 1 : 10;
+						for (int i = 0; this.running && i < sleepTime; i++) {
+							Thread.sleep(1000);
+						}
 					} catch (InterruptedException e) {
 					}
 				} while (displayInfo.paused && this.running);
@@ -82,51 +164,19 @@ class VideoCaptureRTP extends VideoCaptureBase implements RTPAppIntf {
 
 	@Override
 	public void cleanup() {
+		super.cleanup();
 		running = false;
-		if (rtpSession != null) rtpSession.endSession();
-	}
-
-	@Override
-	public void receiveData(DataFrame frame, Participant participant) {
-		switch (frame.payloadType()) {
-			case 26:
-				// jpeg
-				byte[] data = frame.getConcatenatedData();
-				if (data.length == 0) break;
-				InputStream is = new ByteArrayInputStream(data);
-
-				try {
-					onFrame(toBufferedImage(ImageIO.read(is)));
-				} catch (IOException e) {
-				}
-
-				break;
-			case 0:
-				// pcm
-
-				break;
-			default:
-				// unsupported data format
+		if (socket != null) {
+			socket.disconnect();
+			socket.close();
 		}
-	}
-
-	@Override
-	public void userEvent(int type, Participant[] participant) {
-		// nothing
-	}
-
-	@Override
-	public int frameSize(int payloadType) {
-		return 1;
 	}
 }
 
 class VideoCaptureMjpeg extends VideoCaptureBase {
-	public boolean running = true;
-
 	public void run() {
 		while (this.isAlive() && this.running) {
-			String currUrl = displayInfo.dest;
+			String currUrl = getDestPiece(false);
 			try {
 				MjpegInputStream in = new MjpegInputStream(new URL(currUrl).openStream());
 
@@ -135,7 +185,7 @@ class VideoCaptureMjpeg extends VideoCaptureBase {
 				try {
 					while (this.running && !displayInfo.paused && (frame = in.readMjpegFrame()) != null) {
 						onFrame(toBufferedImage(frame.getImage()));
-						if (!currUrl.equals(displayInfo.dest)) in.close();
+						if (!currUrl.equals(getDestPiece(false))) in.close();
 					}
 				} catch (EOFException e) {
 				}
@@ -143,25 +193,26 @@ class VideoCaptureMjpeg extends VideoCaptureBase {
 			} catch (IOException e) {
 			}
 			if (!this.running) break;
-			if (displayInfo.paused || currUrl.equals(displayInfo.dest)) {
-				do {
-					try {
-						Thread.sleep(displayInfo.paused ? 1000 : 10000);
-					} catch (InterruptedException e) {
+			do {
+				try {
+					int sleepTime = displayInfo.paused ? 1 : 10;
+					for (int i = 0; this.running && i < sleepTime; i++) {
+						Thread.sleep(1000);
 					}
-				} while (displayInfo.paused && this.running);
-			}
+				} catch (InterruptedException e) {
+				}
+			} while (displayInfo.paused && this.running);
 		}
 	}
 
 	@Override
 	public void cleanup() {
+		super.cleanup();
 		running = false;
 	}
 }
 
 class VideoCaptureVnc extends VideoCaptureBase {
-	public boolean running = true;
 	private boolean mouseDown = false;
 
 	private Pattern ipPortPattern = Pattern.compile("([^:]+):?([0-9]{1,5})?");
@@ -219,7 +270,7 @@ class VideoCaptureVnc extends VideoCaptureBase {
 
 	public void run() {
 		while (this.isAlive() && this.running) {
-			Matcher m = ipPortPattern.matcher(displayInfo.dest);
+			Matcher m = ipPortPattern.matcher(getDestPiece(false));
 			if (!m.find()) {
 				System.out.println("Error: Expected IP:PORT");
 				displayInfo.paused = true;
@@ -228,22 +279,22 @@ class VideoCaptureVnc extends VideoCaptureBase {
 						port = m.group(2);
 				client.stop();
 				client.start(ip, Integer.parseInt(port));
-				// (new Thread(MakiDesktop.audioPlayer)).start();
 				while (this.running && !displayInfo.paused && client.isRunning()) {
-					// if (!MakiDesktop.audioPlayer.isEnabled()) (new Thread(MakiDesktop.audioPlayer)).start();
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
 					}
 				}
-				// MakiDesktop.audioPlayer.stopIt();
-				if (!this.running) break;
 				if (client.isRunning()) client.stop();
+				if (!this.running) break;
 			}
 			do {
 				//sleep for some time
 				try {
-					Thread.sleep(displayInfo.paused ? 1000 : 10000); // for now, hardcoded delay set to 10000ms
+					int sleepTime = displayInfo.paused ? 1 : 10;
+					for (int i = 0; this.running && i < sleepTime; i++) {
+						Thread.sleep(1000);
+					}
 				} catch (InterruptedException e) {
 				}
 			} while (displayInfo.paused && this.running);
@@ -252,8 +303,9 @@ class VideoCaptureVnc extends VideoCaptureBase {
 
 	@Override
 	public void cleanup() {
-		if (client.isRunning()) client.stop();
+		super.cleanup();
 		running = false;
+		if (client.isRunning()) client.stop();
 	}
 
 	public void clickMouse(double x, double y, int doClick, boolean drag) {
@@ -1252,7 +1304,7 @@ public class VideoCapture extends Thread {
 				}
 			};
 		} else {
-			videoCapture = new VideoCaptureRTP() {
+			videoCapture = new VideoCaptureUDPServer() {
 				@Override
 				public void onFrame(BufferedImage frame) {
 					displayInfo.currentFrame = frame;
@@ -1262,7 +1314,20 @@ public class VideoCapture extends Thread {
 
 		videoCapture.displayInfo = displayInfo;
 
+		if (displayInfo.audio) videoCapture.audioCapture = new AudioCapture(videoCapture) {
+			@Override
+			public void onFrame(byte[] frame) {
+				try {
+					displayInfo.currentAudio.write(frame);
+					displayInfo.currentAudio.flush();
+				} catch (IOException e) {
+				}
+			}
+		};
+
 		videoCapture.start();
+
+		if (displayInfo.audio) videoCapture.audioCapture.start();
 
 	}
 
