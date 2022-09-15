@@ -45,6 +45,9 @@ class AudioProcessorTask extends BukkitRunnable {
 				Location myPos = display.location.clone().add(display.locEnd).multiply(0.5);
 
 				List<Player> playerList = Bukkit.getOnlinePlayers().stream().filter(player -> player.getLocation().distanceSquared(myPos) <= 256).collect(Collectors.toList());
+
+				if (playerList.isEmpty()) continue;
+
 				List<String> names = playerList.stream().map(player -> player.getName()).collect(Collectors.toList());
 
 				for (WebSocket webSocket : this.ws.wsList.keySet()) {

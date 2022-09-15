@@ -235,6 +235,7 @@ class VideoCaptureVnc extends VideoCaptureBase {
 		config.setEnableHextileEncoding(true);
 		config.setEnableRreEncoding(true);
 		config.setEnableZLibEncoding(true);
+		config.setEnableQemuAudioEncoding(displayInfo.audio);
 
 		config.setTargetFramesPerSecond(5);
 
@@ -242,6 +243,16 @@ class VideoCaptureVnc extends VideoCaptureBase {
 
 		// config.setUsernameSupplier(() -> MakiDesktop.getUserPass()[0]);
 		// config.setPasswordSupplier(() -> MakiDesktop.getUserPass()[1]);
+
+		if (displayInfo.audio) {
+			config.setQemuAudioListener(bytes -> {
+				try {
+					displayInfo.currentAudio.write(bytes);
+					displayInfo.currentAudio.flush();
+				} catch (IOException e) {
+				}
+			});
+		}
 
 		config.setScreenUpdateListener(image -> {
 			if (displayInfo.paused || rendering > 5) return; // don't get too behind
@@ -1314,7 +1325,7 @@ public class VideoCapture extends Thread {
 
 		videoCapture.displayInfo = displayInfo;
 
-		if (displayInfo.audio) videoCapture.audioCapture = new AudioCapture(videoCapture) {
+		if (displayInfo.audio && !displayInfo.vnc) videoCapture.audioCapture = new AudioCapture(videoCapture) {
 			@Override
 			public void onFrame(byte[] frame) {
 				try {
