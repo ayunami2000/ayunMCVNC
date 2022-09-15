@@ -60,7 +60,7 @@ public class Framebuffer {
 					DataOutputStream dos = new DataOutputStream(session.getOutputStream());
 					dos.write(255);
 					dos.write(1);
-					dos.writeShort(1);
+					dos.writeShort(0);
 					dos.flush();
 
 					dos.write(255);
@@ -68,7 +68,7 @@ public class Framebuffer {
 					dos.writeShort(2);
 					dos.write(0); // channel format (U8)
 					dos.write(2); // num of channels (2)
-					dos.writeInt(11025); // frequency (11025)
+					dos.writeInt(22050); // frequency (8000)
 					dos.flush();
 				} else {
 					renderers.get(rectangle.getEncoding()).render(in, frame, rectangle);

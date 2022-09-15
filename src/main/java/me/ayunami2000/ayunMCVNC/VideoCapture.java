@@ -235,7 +235,6 @@ class VideoCaptureVnc extends VideoCaptureBase {
 		config.setEnableHextileEncoding(true);
 		config.setEnableRreEncoding(true);
 		config.setEnableZLibEncoding(true);
-		config.setEnableQemuAudioEncoding(displayInfo.audio);
 
 		config.setTargetFramesPerSecond(5);
 
@@ -243,16 +242,6 @@ class VideoCaptureVnc extends VideoCaptureBase {
 
 		// config.setUsernameSupplier(() -> MakiDesktop.getUserPass()[0]);
 		// config.setPasswordSupplier(() -> MakiDesktop.getUserPass()[1]);
-
-		if (displayInfo.audio) {
-			config.setQemuAudioListener(bytes -> {
-				try {
-					displayInfo.currentAudio.write(bytes);
-					displayInfo.currentAudio.flush();
-				} catch (IOException e) {
-				}
-			});
-		}
 
 		config.setScreenUpdateListener(image -> {
 			if (displayInfo.paused || rendering > 5) return; // don't get too behind
@@ -289,6 +278,18 @@ class VideoCaptureVnc extends VideoCaptureBase {
 				String ip = m.group(1),
 						port = m.group(2);
 				client.stop();
+				config.setEnableQemuAudioEncoding(displayInfo.audio);
+				if (displayInfo.audio) {
+					config.setQemuAudioListener(bytes -> {
+						try {
+							displayInfo.currentAudio.write(bytes);
+							displayInfo.currentAudio.flush();
+						} catch (IOException e) {
+						}
+					});
+				} else {
+					config.setQemuAudioListener(null);
+				}
 				client.start(ip, Integer.parseInt(port));
 				while (this.running && !displayInfo.paused && client.isRunning()) {
 					try {
@@ -1338,7 +1339,7 @@ public class VideoCapture extends Thread {
 
 		videoCapture.start();
 
-		if (displayInfo.audio) videoCapture.audioCapture.start();
+		if (displayInfo.audio && !displayInfo.vnc) videoCapture.audioCapture.start();
 
 	}
 
