@@ -67,8 +67,8 @@ public class Framebuffer {
 					dos.write(1);
 					dos.writeShort(2);
 					dos.write(0); // channel format (U8)
-					dos.write(2); // num of channels (2)
-					dos.writeInt(22050); // frequency (8000)
+					dos.write(session.getConfig().getAudioChannelCountSupplier().get()); // num of channels
+					dos.writeInt(session.getConfig().getAudioFrequencySupplier().get()); // frequency
 					dos.flush();
 				} else {
 					renderers.get(rectangle.getEncoding()).render(in, frame, rectangle);

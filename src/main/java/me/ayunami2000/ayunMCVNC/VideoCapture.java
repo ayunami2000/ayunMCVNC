@@ -240,6 +240,9 @@ class VideoCaptureVnc extends VideoCaptureBase {
 
 		config.setShared(true);
 
+		config.setAudioChannelCountSupplier(() -> 2);
+		config.setAudioFrequencySupplier(() -> 44100);
+
 		// config.setUsernameSupplier(() -> MakiDesktop.getUserPass()[0]);
 		// config.setPasswordSupplier(() -> MakiDesktop.getUserPass()[1]);
 
@@ -283,7 +286,6 @@ class VideoCaptureVnc extends VideoCaptureBase {
 					config.setQemuAudioListener(bytes -> {
 						try {
 							displayInfo.currentAudio.write(bytes);
-							displayInfo.currentAudio.flush();
 						} catch (IOException e) {
 						}
 					});
@@ -1331,7 +1333,6 @@ public class VideoCapture extends Thread {
 			public void onFrame(byte[] frame) {
 				try {
 					displayInfo.currentAudio.write(frame);
-					displayInfo.currentAudio.flush();
 				} catch (IOException e) {
 				}
 			}
