@@ -12,6 +12,7 @@ import javax.sound.sampled.AudioFormat;
 import java.io.ByteArrayOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,6 +49,7 @@ class AudioProcessorTask extends BukkitRunnable {
 				int len = (int) (1000 * display.currentAudio.size() / (audioFormat.getSampleRate() * audioFormat.getChannels()));
 				byte[] aud = display.currentAudio.toByteArray();
 				display.currentAudio.reset();
+				if (Arrays.equals(aud, new byte[aud.length])) continue;
 				aud = encodePcmToMp3(aud, audioFormat, audioFormatOut);
 
 				Location myPos = display.location.clone().add(display.locEnd).multiply(0.5);
