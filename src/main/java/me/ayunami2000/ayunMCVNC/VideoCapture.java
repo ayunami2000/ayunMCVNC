@@ -16,6 +16,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -24,6 +25,8 @@ import java.util.regex.Pattern;
 // ffmpeg -y -re -stream_loop -1 -thread_queue_size 4096 -i lagtrain.mp4 -f rawvideo -c:v mjpeg -qscale:v 16 -r 20 udp://127.0.0.1:1337 -f s16le -acodec pcm_s16le -ac 2 -ar 48000 udp://127.0.0.1:1338
 // ffplay udp://127.0.0.1:1337
 // ffplay -f s16le -acodec pcm_s16le -ac 2 -ar 48000 udp://127.0.0.1:1338
+
+// ffmpeg -fflags nobuffer -f s16le -acodec pcm_s16le -ac 2 -ar 44100 -i udp://127.0.0.1:1327 -listen 1 -f ogg -movflags frag_keyframe+empty_moov http://127.0.0.1:8523
 
 class VideoCaptureBase extends Thread {
 	public boolean running = true;
@@ -286,6 +289,8 @@ class VideoCaptureVnc extends VideoCaptureBase {
 					config.setQemuAudioListener(bytes -> {
 						try {
 							displayInfo.currentAudio.write(bytes);
+							DatagramPacket dpSend = new DatagramPacket(bytes, bytes.length, InetAddress.getLoopbackAddress(), displayInfo.uniquePort);
+							displayInfo.audioSocket.send(dpSend);
 						} catch (IOException e) {
 						}
 					});
@@ -1333,6 +1338,8 @@ public class VideoCapture extends Thread {
 			public void onFrame(byte[] frame) {
 				try {
 					displayInfo.currentAudio.write(frame);
+					DatagramPacket dpSend = new DatagramPacket(frame, frame.length, InetAddress.getLoopbackAddress(), displayInfo.uniquePort);
+					displayInfo.audioSocket.send(dpSend);
 				} catch (IOException e) {
 				}
 			}
