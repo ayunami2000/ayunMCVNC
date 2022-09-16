@@ -117,28 +117,14 @@
         };
     }
 
-    let counter = 0;
-    let counters = [];
-
-    let lenLen = 10;
-
     function fard() {
-        counters.push(counter);
-        counter = 0;
-        if (counters.length > 4) {
-            counters = counters.slice(counters.length - 4);
-        }
-        if (counters.length == 4) {
-            lenLen = Math.round(counters.reduce((p, c) => p + c) / 4);
-        }
-        if (queue.length >= lenLen) {
-            for (let i = 0; i < lenLen; i++) writer.write(queue.shift());
+        if (queue.length >= 10) {
+            for (let i = 0; i < 10; i++) writer.write(queue.shift());
         }
         setTimeout(fard, 250);
     }
 
     function fardWrap(ad) {
-        counter++;
         if (queue.length > 40) {
             // writer.write(ad);
         } else {
