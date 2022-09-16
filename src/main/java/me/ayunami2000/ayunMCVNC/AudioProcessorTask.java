@@ -43,8 +43,8 @@ class AudioProcessorTask extends BukkitRunnable {
 			Collection<DisplayInfo> displays = DisplayInfo.displays.values();
 			for (DisplayInfo display : displays) {
 				if (!display.audio) continue;
-				if (display.currentAudio.size() < (audioFormat.getSampleRate() * audioFormat.getChannels()) / 2) continue; // try to send at least every half-second of audio
-				// if (display.currentAudio.size() == 0) continue;
+				// if (display.currentAudio.size() < (audioFormat.getSampleRate() * audioFormat.getChannels()) / 2) continue; // try to send at least every half-second of audio
+				if (display.currentAudio.size() == 0) continue;
 
 				int len = (int) (1000 * display.currentAudio.size() / (audioFormat.getSampleRate() * audioFormat.getChannels()));
 				byte[] aud = display.currentAudio.toByteArray();

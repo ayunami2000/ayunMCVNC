@@ -7,92 +7,7 @@
 <body>
 <button onclick="doit(this);">connect</button>
 <script>
-    /*
-    class JitterBuffer {
-        constructor(jitter, period) {
-            this.period = period;
-            this.setJitter(jitter);
-            this.jitterSamples = null;
-            this.queue = [];
-            this.ready = false;
-
-            this.duration = null;
-            this.timestamp = null;
-            this.delta = null;
-        }
-
-        setJitter(jitter) {
-            this.jitter = jitter;
-            this.jitterSamples = jitter / (44100 / 1000);
-        }
-
-        getJitter() {
-            return this.jitter;
-        }
-
-        setPeriod(period) {
-            this.period = period;
-        }
-
-        write(rtpPacket) {
-            var t = rtpPacket.timestamp / 1000;
-
-            //when first packet arrive and timestamp already known
-            //we have to determine difference between rtp stream timestamps and local time
-            if (this.delta == 0 && this.timestamp > 0) {
-                this.delta = t - this.timestamp;
-                this.timestamp += this.delta;
-            }
-
-            //if buffer's ready flag equals true then it means that reading
-            //starting and we should compare timestamp of arrived packet with time of
-            //last reading.
-            if (this.ready && t > this.timestamp + this.jitterSamples) {
-                //silentrly discard otstanding packet
-                return;
-            }
-
-            //if RTP packet is not outstanding or reading not started yet (ready == false)
-            //queue packet.
-            this.queue.push(rtpPacket);
-
-            //allow read when buffer is full;
-            this.duration += this.period;
-            if (!this.ready && this.duration > (this.period + this.jitter)) {
-                this.ready = true;
-            }
-        }
-
-        reset() {
-            this.queue.length = 0;
-            this.duration = 0;
-            fardts = 0;
-            this.delta = 0;
-        }
-
-        read(timestamp) {
-            //discard buffer is buffer is not full yet
-            if (!this.ready) {
-                return null;
-            }
-
-            //remember timestamp
-            this.timestamp = timestamp + this.delta;
-
-            //if packet queue is empty (but was full) we have to returns
-            //silence
-            if (this.queue.length == 0) {
-                return null;
-            }
-
-            //fill media buffer
-            return this.queue.shift();
-        }
-    }
-
-    const jitterBuffer = new JitterBuffer(100, 500);
-
-    */
+    const queue = [];
 
     let context = new AudioContext(),
         panner = context.createPanner(),
@@ -100,31 +15,12 @@
         writer = generator.writable.getWriter(),
         decoder = new AudioDecoder({
             output: audioData => {
-                writer.write(audioData);
-                // jitterBuffer.write(audioData);
-                // writer.write(audioData);
+                fardWrap(audioData);
             },
             error: e => console.error(e)
         }),
         doneit = false,
         far = true;
-
-    /*
-    var fardts = 0;
-    var lastWow = Date.now();
-
-    function fard() {
-        jitterBuffer.setPeriod(len);
-        const xd = jitterBuffer.read(fardts);
-        if (xd != null) writer.write(xd);
-        const nowwow = Date.now();
-        fardts += nowwow - lastWow;
-        lastWow = nowwow;
-        setTimeout(fard, 0);
-    }
-
-    fard();
-    */
 
     decoder.configure({
         codec: "mp3",
@@ -166,6 +62,9 @@
         return "";
     }
 
+    let lastTime = Date.now();
+    let avgTime = -1;
+
     let ts = 0;
     let dur = 0;
 
@@ -203,17 +102,51 @@
                     panner.positionX.value = +pos[0];
                     panner.positionY.value = +pos[1];
                     panner.positionZ.value = +pos[2];
-                    //dur = +pos[3];
+                    dur = +pos[3];
                 }
             } else {
                 if (!far) {
-                    //decoder.decode(new EncodedAudioChunk({type: 'key', data: e.data, timestamp: ts * 1000, duration: dur * 1000}));
-                    decoder.decode(new EncodedAudioChunk({type: 'key', data: e.data, timestamp: 0, duration: 0}));
-                    //ts += dur;
+                    decoder.decode(new EncodedAudioChunk({type: 'key', data: e.data, timestamp: ts * 1000, duration: dur * 1000}));
+                    ts += dur;
+                    const nowwow = Date.now();
+                    if (avgTime == -1) avgTime = nowwow - lastTime;
+                    avgTime = (avgTime + (nowwow - lastTime)) / 2;
+                    lastTime = nowwow;
                 }
             }
         };
     }
+
+    let counter = 0;
+    let counters = [];
+
+    let lenLen = 10;
+
+    function fard() {
+        counters.push(counter);
+        counter = 0;
+        if (counters.length > 4) {
+            counters = counters.slice(counters.length - 4);
+        }
+        if (counters.length == 4) {
+            lenLen = Math.round(counters.reduce((p, c) => p + c) / 4);
+        }
+        if (queue.length >= lenLen) {
+            for (let i = 0; i < lenLen; i++) writer.write(queue.shift());
+        }
+        setTimeout(fard, 250);
+    }
+
+    function fardWrap(ad) {
+        counter++;
+        if (queue.length > 40) {
+            // writer.write(ad);
+        } else {
+            queue.push(ad);
+        }
+    }
+
+    fard();
 </script>
 </body>
 </html>
