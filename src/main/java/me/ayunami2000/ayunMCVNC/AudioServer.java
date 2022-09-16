@@ -1,51 +1,43 @@
 package me.ayunami2000.ayunMCVNC;
 
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import me.ayunami2000.ayunMCVNC.ws.HTTPInitializer;
+
 import java.util.HashMap;
 
-import org.java_websocket.WebSocket;
-import org.java_websocket.handshake.ClientHandshake;
-import org.java_websocket.server.WebSocketServer;
+public class AudioServer {
+	public static HashMap<Channel, String> wsList = new HashMap<>();
+	public static HashMap<Channel, String> authList = new HashMap<>();
+	public static HashMap<String, String> nameList = new HashMap<>();
 
-public class AudioServer extends WebSocketServer {
-	public HashMap<WebSocket, String> wsList = new HashMap<>();
+	private final EventLoopGroup bossGroup;
+	private final EventLoopGroup workerGroup;
 
-	public AudioServer(InetSocketAddress address) {
-		super(address);
-	}
+	public AudioServer(int port) {
+		bossGroup = new NioEventLoopGroup(1);
+		workerGroup = new NioEventLoopGroup();
+		try {
+			ServerBootstrap b = new ServerBootstrap();
+			b.option(ChannelOption.SO_REUSEADDR, true);
+			b.option(ChannelOption.SO_BACKLOG, 1024);
+			b.group(bossGroup, workerGroup)
+					.channel(NioServerSocketChannel.class)
+					//.handler(new LoggingHandler(LogLevel.INFO))
+					.childHandler(new HTTPInitializer());
 
-	@Override
-	public void onOpen(WebSocket conn, ClientHandshake handshake) {
-
-	}
-
-	@Override
-	public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-		wsList.remove(conn);
-	}
-
-	@Override
-	public void onMessage(WebSocket conn, String message) {
-		if (wsList.containsKey(conn)) {
-			conn.close();
-		} else {
-			wsList.put(conn, message);
+			b.bind(port).sync();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
 
-	@Override
-	public void onMessage(WebSocket conn, ByteBuffer message) {
-
-	}
-
-	@Override
-	public void onError(WebSocket conn, Exception ex) {
-
-	}
-
-	@Override
-	public void onStart() {
-
+	public void stop() {
+		bossGroup.shutdownGracefully();
+		workerGroup.shutdownGracefully();
 	}
 }

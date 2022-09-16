@@ -1,17 +1,18 @@
 package me.ayunami2000.ayunMCVNC;
 
 import de.sciss.jump3r.lowlevel.LameEncoder;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
-import org.java_websocket.WebSocket;
 
 import javax.sound.sampled.AudioFormat;
 import java.io.ByteArrayOutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -24,27 +25,26 @@ class AudioProcessorTask extends BukkitRunnable {
 	private final AudioFormat audioFormatOut = new AudioFormat(44100, 16, 2, true, false);
 
 	AudioProcessorTask() {
-		this.ws = new AudioServer(new InetSocketAddress(InetAddress.getLoopbackAddress(), 8819));
-		this.ws.start();
+		this.ws = new AudioServer(28819);
+		// this.ws.start();
 	}
 
 	public synchronized void cancel() throws IllegalStateException {
-		try {
-			this.ws.stop();
-		} catch (InterruptedException e) {
-		}
+		// try {
+		this.ws.stop();
+		// } catch (InterruptedException e) {
+		// }
 		super.cancel();
 	}
 
 	@Override
 	public void run() {
-		if (this.ws == null) return;
 		synchronized (lock) {
 			Collection<DisplayInfo> displays = DisplayInfo.displays.values();
 			for (DisplayInfo display : displays) {
 				if (!display.audio) continue;
-				// if (display.currentAudio.size() < (audioFormat.getSampleRate() * audioFormat.getChannels()) / 2) continue; // try to send at least every half-second of audio
-				if (display.currentAudio.size() == 0) continue;
+				if (display.currentAudio.size() < (audioFormat.getSampleRate() * audioFormat.getChannels()) / 2) continue; // try to send at least every half-second of audio
+				// if (display.currentAudio.size() == 0) continue;
 
 				int len = (int) (1000 * display.currentAudio.size() / (audioFormat.getSampleRate() * audioFormat.getChannels()));
 				byte[] aud = display.currentAudio.toByteArray();
@@ -60,8 +60,8 @@ class AudioProcessorTask extends BukkitRunnable {
 
 				List<String> names = playerList.stream().map(player -> player.getName()).collect(Collectors.toList());
 
-				for (WebSocket webSocket : this.ws.wsList.keySet()) {
-					String s = this.ws.wsList.get(webSocket);
+				for (Channel webSocket : AudioServer.wsList.keySet()) {
+					String s = AudioServer.wsList.get(webSocket);
 					if (names.contains(s)) {
 						Player player = Bukkit.getPlayerExact(s);
 						Location loc = player.getLocation();
@@ -72,8 +72,9 @@ class AudioProcessorTask extends BukkitRunnable {
 						pos = Main.rotateVectorCC(pos, new Vector(1, 0, 0), (float) (pitch * Math.PI / 180.0));
 						//pos = new Vec3d(pos.x * Math.cos(yaw) + pos.z * Math.sin(yaw), pos.y - (pitch / 90), pos.z * Math.cos(yaw) - pos.x * Math.sin(yaw));
 						if (webSocket.isOpen()) {
-							webSocket.send(pos.getX() + "," + pos.getY() + "," + pos.getZ() + "," + len);
-							webSocket.send(aud);
+							webSocket.write(new TextWebSocketFrame(pos.getX() + "," + pos.getY() + "," + pos.getZ() + "," + len));
+							webSocket.write(new BinaryWebSocketFrame(Unpooled.wrappedBuffer(aud)));
+							webSocket.flush();
 						}
 					}
 				}

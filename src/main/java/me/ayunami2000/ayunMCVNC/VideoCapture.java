@@ -84,7 +84,7 @@ class VideoCaptureUDPServer extends VideoCaptureBase {
 					byte[] data = packet.getData();
 
 					int length = packet.getLength();
-					for (int i = packet.getOffset(); i < length; i++) {
+					for (int i = packet.getOffset(); i < length && this.isAlive() && running && !displayInfo.paused; i++) {
 						byte b = data[i];
 						switch (b) {
 							case (byte) 0xFF:
