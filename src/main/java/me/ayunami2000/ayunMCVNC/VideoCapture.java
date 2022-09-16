@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 // ffplay -f s16le -acodec pcm_s16le -ac 2 -ar 48000 udp://127.0.0.1:1338
 
 // ffmpeg -fflags nobuffer -f s16le -acodec pcm_s16le -ac 2 -ar 44100 -i udp://127.0.0.1:1327 -listen 1 -f ogg -movflags frag_keyframe+empty_moov http://127.0.0.1:8523
+// ffmpeg -fflags nobuffer -f s16le -acodec pcm_s16le -ac 2 -ar 44100 -i udp://127.0.0.1:1327 -f mp3 udp://127.0.0.1:5959
 
 class VideoCaptureBase extends Thread {
 	public boolean running = true;

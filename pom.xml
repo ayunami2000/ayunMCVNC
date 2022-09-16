@@ -47,12 +47,6 @@
             <version>1.0.5</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>dev.onvoid.webrtc</groupId>
-            <artifactId>webrtc-java</artifactId>
-            <version>0.6.0</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
     <build>

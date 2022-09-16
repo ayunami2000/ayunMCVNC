@@ -1,18 +1,5 @@
 package me.ayunami2000.ayunMCVNC;
 
-import dev.onvoid.webrtc.CreateSessionDescriptionObserver;
-import dev.onvoid.webrtc.PeerConnectionFactory;
-import dev.onvoid.webrtc.RTCConfiguration;
-import dev.onvoid.webrtc.RTCIceServer;
-import dev.onvoid.webrtc.RTCOfferOptions;
-import dev.onvoid.webrtc.RTCPeerConnection;
-import dev.onvoid.webrtc.RTCRtpTransceiver;
-import dev.onvoid.webrtc.RTCRtpTransceiverDirection;
-import dev.onvoid.webrtc.RTCSessionDescription;
-import dev.onvoid.webrtc.SetSessionDescriptionObserver;
-import dev.onvoid.webrtc.media.MediaStreamTrack;
-import dev.onvoid.webrtc.media.audio.AudioOptions;
-import dev.onvoid.webrtc.media.audio.AudioTrack;
 import org.bukkit.Location;
 import org.bukkit.command.BlockCommandSender;
 import org.bukkit.command.CommandSender;
@@ -54,7 +41,6 @@ public class DisplayInfo {
 	public BufferedImage currentFrame = null;
 	public ByteArrayOutputStream currentAudio = new ByteArrayOutputStream();
 	public DatagramSocket audioSocket;
-	public RTCPeerConnection rtcPeerConnection;
 	public VideoCapture videoCapture;
 	private final BukkitTask task1;
 	public int uniquePort;
@@ -91,51 +77,6 @@ public class DisplayInfo {
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-
-		PeerConnectionFactory factory = new PeerConnectionFactory();
-		RTCConfiguration rtcConfig = new RTCConfiguration();
-		RTCIceServer rtcIceServer = new RTCIceServer();
-		rtcIceServer.urls.add("stun:stun.l.google.com:19302");
-		rtcConfig.iceServers.add(rtcIceServer);
-		rtcPeerConnection = factory.createPeerConnection(rtcConfig, rtcIceCandidate -> {
-		});
-		AudioTrack audioTrack = factory.createAudioTrack("audioTrack", factory.createAudioSource(new AudioOptions()));
-		audioTrack.setEnabled(true);
-		List<String> fard = new ArrayList<>();
-		fard.add("stream");
-		rtcPeerConnection.addTrack(audioTrack, fard);
-		for (RTCRtpTransceiver transceiver : rtcPeerConnection.getTransceivers()) {
-			MediaStreamTrack track = transceiver.getSender().getTrack();
-
-			if (track.getKind().equals(MediaStreamTrack.AUDIO_TRACK_KIND)) {
-				transceiver.setDirection(RTCRtpTransceiverDirection.SEND_ONLY);
-				break;
-			}
-		}
-		RTCOfferOptions options = new RTCOfferOptions();
-		rtcPeerConnection.createOffer(options, new CreateSessionDescriptionObserver() {
-			@Override
-			public void onSuccess(RTCSessionDescription rtcSessionDescription) {
-				rtcPeerConnection.setLocalDescription(rtcSessionDescription, new SetSessionDescriptionObserver() {
-					@Override
-					public void onSuccess() {
-						System.out.println(rtcSessionDescription.sdp); // the big sdp...
-					}
-
-					@Override
-					public void onFailure(String s) {
-						System.err.println(s);
-					}
-
-				});
-			}
-
-			@Override
-			public void onFailure(String s) {
-				System.err.println(s);
-			}
-		});
-
 	}
 
 	public void setEndLoc() {
