@@ -11,7 +11,7 @@ import me.ayunami2000.ayunMCVNC.ws.HTTPInitializer;
 import java.util.HashMap;
 
 public class AudioServer {
-	public static HashMap<Channel, String> wsList = new HashMap<>();
+	public static final HashMap<Channel, String> wsList = new HashMap<>();
 	public static HashMap<Channel, String> authList = new HashMap<>();
 	public static HashMap<String, String> nameList = new HashMap<>();
 

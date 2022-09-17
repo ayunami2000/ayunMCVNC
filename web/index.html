@@ -5,48 +5,26 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 </head>
 <body>
-<button onclick="window.doit(this);">connect</button>
-<script type="text/javascript" src="jsmad.wrapper.js"></script>
+<button onclick="doit(this);">connect</button>
 <script>
-    window.doit = function() {
-        alert("Still loading, please wait!");
-    };
-
-    function makeAudioBuffer(pcmArrayBuffer) {
-        const interleavedPcmData = new DataView(pcmArrayBuffer);
-        const audioBuffer = new AudioBuffer({
-            length: pcmArrayBuffer.byteLength / 2 / 2,
-            numberOfChannels: 2,
-            sampleRate: 44100
-        });
-        const planarChannelDatas = [];
-        planarChannelDatas.push(audioBuffer.getChannelData(0));
-        planarChannelDatas.push(audioBuffer.getChannelData(1));
-        for (let i = 0; i < interleavedPcmData.byteLength; i += 2) {
-            const channelNumber = i / 2 % 2;
-            const value = interleavedPcmData.getInt16(i, true);
-            planarChannelDatas[channelNumber][Math.floor(i / 2 / 2)] = value < 0 ? value / 32768 : value / 32767;
-        }
-        audioBuffer.copyToChannel(planarChannelDatas[0], 0, 0);
-        audioBuffer.copyToChannel(planarChannelDatas[1], 1, 0);
-        return audioBuffer;
-    }
-
     let context = new AudioContext(),
         panner = context.createPanner(),
-        decoder = new Module.Decoder(),
         doneit = false,
         far = true;
 
     const cmn = context.createChannelMerger(1);
 
-    function play(ch) {
+    function play(ch, of) {
         const source = context.createBufferSource();
 
         source.buffer = ch;
         source.connect(cmn);
 
-        source.start();
+        if (of > 1) {
+            source.start(0, of - 1);
+        } else {
+            source.start(1 - of);
+        }
     }
 
     panner.maxDistance = 16.1;
@@ -81,7 +59,7 @@
         return "";
     }
 
-    window.doit = function(elem) {
+    function doit(elem) {
         if (doneit) return;
         const uname = prompt("Please enter your username in-game:", getCookie("uname"));
         if (!uname) return;
@@ -118,31 +96,12 @@
                 }
             } else {
                 if (!far) {
-                    var src = new Uint8Array(e.data);
-
-                    var ps = src.length;
-                    var ptr = Module._malloc(ps);
-
-                    var arr = new Uint8Array(Module.HEAPU8.buffer, ptr, ps);
-                    var portion = new Uint8Array(e.data, 0, ps);
-                    arr.set(portion, 0);
-
-                    decoder.addFragment(ptr, ps);
-
-                    Module._malloc(256);
+                    context.decodeAudioData(e.data, bf => {
+                        play(bf, 0);
+                    }, err => console.error(err));
                 }
             }
         };
-
-        setInterval(() => {
-            if (decoder.hasMore()) {
-                var audio = decoder.decode(20);
-                if (audio) {
-                    console.log(audio);
-                    play(audio);
-                }
-            }
-        }, 0);
     }
 </script>
 </body>

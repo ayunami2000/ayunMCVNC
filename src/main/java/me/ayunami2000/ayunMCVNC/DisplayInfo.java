@@ -1,6 +1,5 @@
 package me.ayunami2000.ayunMCVNC;
 
-import org.apache.commons.lang.SystemUtils;
 import org.bukkit.Location;
 import org.bukkit.command.BlockCommandSender;
 import org.bukkit.command.CommandSender;
@@ -9,12 +8,9 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.DatagramSocket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -43,7 +39,6 @@ public class DisplayInfo {
 	public boolean paused;
 
 	public BufferedImage currentFrame = null;
-	public DatagramSocket audioSocket;
 	public OutputStream audioOs;
 	public InputStream audioIs;
 	public Process audioProcess;
@@ -73,21 +68,11 @@ public class DisplayInfo {
 		FrameProcessorTask frameProcessorTask = new FrameProcessorTask(this, this.mapIds.size(), this.width);
 		Main.tasks.add(task1 = frameProcessorTask.runTaskTimerAsynchronously(Main.plugin, 0, 1));
 
-		uniquePort = (18000 + mapIds.get(0));
-
-		System.out.println(uniquePort);
-
 		try {
-			audioSocket = new DatagramSocket();
-			audioSocket.setReuseAddress(true);
-		} catch (SocketException e) {
-			e.printStackTrace();
-		}
-
-		try {
-			audioProcess = new ProcessBuilder("ffmpeg", "-fflags", "nobuffer", "-f", "s16le", "-acodec", "pcm_s16le", "-ac", "2", "-ar", "44100", "-i", "pipe:", "-f", "mp3", "-").start();
+			audioProcess = new ProcessBuilder("ffmpeg", "-fflags", "nobuffer", "-f", "s16le", "-acodec", "pcm_s16le", "-ac", "2", "-ar", "44100", "-i", "pipe:", "-f", "mp3", "-codec:a", "libmp3lame", "-b:a", "128k", "-").start();
 			audioIs = audioProcess.getInputStream();
 			audioOs = audioProcess.getOutputStream();
+			/*
 			new Thread(() -> {
 				try {
 					InputStream err = audioProcess.getErrorStream();
@@ -101,6 +86,7 @@ public class DisplayInfo {
 					e.printStackTrace();
 				}
 			}).start();
+			*/
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -135,10 +121,6 @@ public class DisplayInfo {
 		if (fr) {
 			unusedMapIds.addAll(this.mapIds);
 		}
-		if (audioSocket != null) {
-			audioSocket.disconnect();
-			audioSocket.close();
-		}
 		if (audioProcess != null) {
 			audioProcess.destroy();
 		}
@@ -149,6 +131,10 @@ public class DisplayInfo {
 	}
 
 	public static DisplayInfo getNearest(CommandSender sender) {
+		return getNearest(sender, -1);
+	}
+
+	public static DisplayInfo getNearest(CommandSender sender, int hardLimit) {
 		Collection<DisplayInfo> displayValues = displays.values();
 		double minDist = Double.MAX_VALUE;
 		DisplayInfo res = null;
@@ -163,6 +149,7 @@ public class DisplayInfo {
 		}
 		for (DisplayInfo display : displayValues) {
 			double dist = (player != null ? player.getLocation() : cmdBlockSender.getBlock().getLocation()).distanceSquared(display.location.clone().add(display.locEnd).multiply(0.5));
+			if (hardLimit != -1 && dist > hardLimit) continue;
 			if (minDist > dist) {
 				minDist = dist;
 				res = display;

@@ -20,7 +20,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
@@ -246,7 +245,7 @@ class VideoCaptureVnc extends VideoCaptureBase {
 		config.setEnableRreEncoding(true);
 		config.setEnableZLibEncoding(true);
 
-		config.setTargetFramesPerSecond(5);
+		// config.setTargetFramesPerSecond(5);
 
 		config.setShared(true);
 
@@ -303,8 +302,6 @@ class VideoCaptureVnc extends VideoCaptureBase {
 					config.setQemuAudioListener(bytes -> {
 						try {
 							if (displayInfo.audioOs != null) displayInfo.audioOs.write(bytes);
-							DatagramPacket dpSend = new DatagramPacket(bytes, bytes.length, InetAddress.getLoopbackAddress(), displayInfo.uniquePort);
-							displayInfo.audioSocket.send(dpSend);
 						} catch (IOException e) {
 						}
 					});
@@ -1352,8 +1349,6 @@ public class VideoCapture extends Thread {
 			public void onFrame(byte[] frame) {
 				try {
 					if (displayInfo.audioOs != null) displayInfo.audioOs.write(frame);
-					DatagramPacket dpSend = new DatagramPacket(frame, frame.length, InetAddress.getLoopbackAddress(), displayInfo.uniquePort);
-					displayInfo.audioSocket.send(dpSend);
 				} catch (IOException e) {
 				}
 			}
