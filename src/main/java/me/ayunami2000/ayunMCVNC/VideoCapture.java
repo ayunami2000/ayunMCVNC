@@ -5,6 +5,10 @@ import com.shinyhut.vernacular.client.VernacularConfig;
 import com.shinyhut.vernacular.client.rendering.ColorDepth;
 import me.ayunami2000.ayunMCVNC.MJPG.MjpegFrame;
 import me.ayunami2000.ayunMCVNC.MJPG.MjpegInputStream;
+import org.bukkit.Bukkit;
+import org.bukkit.Instrument;
+import org.bukkit.Note;
+import org.bukkit.entity.Player;
 
 import javax.imageio.ImageIO;
 import java.awt.Graphics2D;
@@ -18,6 +22,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,6 +33,7 @@ import java.util.regex.Pattern;
 
 // ffmpeg -fflags nobuffer -f s16le -acodec pcm_s16le -ac 2 -ar 44100 -i udp://127.0.0.1:1327 -listen 1 -f ogg -movflags frag_keyframe+empty_moov http://127.0.0.1:8523
 // ffmpeg -fflags nobuffer -f s16le -acodec pcm_s16le -ac 2 -ar 44100 -i udp://127.0.0.1:1327 -f mp3 udp://127.0.0.1:5959
+// ffmpeg -fflags nobuffer -f s16le -acodec pcm_s16le -ac 2 -ar 44100 -i udp://127.0.0.1:1327 -f mp3 tcp://127.0.0.1:5959?listen=2&tcp_nodelay=1
 
 class VideoCaptureBase extends Thread {
 	public boolean running = true;
@@ -272,6 +278,13 @@ class VideoCaptureVnc extends VideoCaptureBase {
 				}
 				rendering--;
 			}).start();
+		});
+
+		config.setBellListener(unused -> {
+			Collection<? extends Player> players = Bukkit.getOnlinePlayers();
+			for (Player player : players) {
+				player.playNote(displayInfo.location.clone().add(displayInfo.locEnd).multiply(0.5), Instrument.PIANO, Note.natural(0, Note.Tone.C));
+			}
 		});
 	}
 
