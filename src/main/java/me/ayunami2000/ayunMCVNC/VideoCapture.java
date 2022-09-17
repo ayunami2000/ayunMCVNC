@@ -250,7 +250,7 @@ class VideoCaptureVnc extends VideoCaptureBase {
 		config.setShared(true);
 
 		config.setAudioChannelCountSupplier(() -> 2);
-		config.setAudioFrequencySupplier(() -> 44100);
+		config.setAudioFrequencySupplier(() -> 48000);
 
 		// config.setUsernameSupplier(() -> MakiDesktop.getUserPass()[0]);
 		// config.setPasswordSupplier(() -> MakiDesktop.getUserPass()[1]);
@@ -300,10 +300,17 @@ class VideoCaptureVnc extends VideoCaptureBase {
 				config.setEnableQemuAudioEncoding(displayInfo.audio);
 				if (displayInfo.audio) {
 					config.setQemuAudioListener(bytes -> {
-						try {
-							if (displayInfo.audioOs != null) displayInfo.audioOs.write(bytes);
-						} catch (IOException e) {
-						}
+						new Thread(() -> {
+							try {
+								if (displayInfo.audioOs != null) {
+									AudioProcessorTask.lock.lock();
+									displayInfo.audioOs.write(bytes);
+									AudioProcessorTask.lock.unlock();
+								}
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}).start();
 					});
 				} else {
 					config.setQemuAudioListener(null);
@@ -1347,10 +1354,16 @@ public class VideoCapture extends Thread {
 		if (displayInfo.audio && !displayInfo.vnc) videoCapture.audioCapture = new AudioCapture(videoCapture) {
 			@Override
 			public void onFrame(byte[] frame) {
-				try {
-					if (displayInfo.audioOs != null) displayInfo.audioOs.write(frame);
-				} catch (IOException e) {
-				}
+				new Thread(() -> {
+					try {
+						if (displayInfo.audioOs != null) {
+							AudioProcessorTask.lock.lock();
+							displayInfo.audioOs.write(frame);
+							AudioProcessorTask.lock.unlock();
+						}
+					} catch (IOException e) {
+					}
+				}).start();
 			}
 		};
 

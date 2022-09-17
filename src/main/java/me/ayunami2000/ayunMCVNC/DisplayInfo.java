@@ -44,7 +44,6 @@ public class DisplayInfo {
 	public Process audioProcess;
 	public VideoCapture videoCapture;
 	private final BukkitTask task1;
-	public int uniquePort;
 
 	public DisplayInfo(String name, List<Integer> mapIds, boolean dither, boolean mouse, boolean vnc, boolean audio, Location location, int width, String dest, boolean paused) {
 		this.name = name;
@@ -69,10 +68,9 @@ public class DisplayInfo {
 		Main.tasks.add(task1 = frameProcessorTask.runTaskTimerAsynchronously(Main.plugin, 0, 1));
 
 		try {
-			audioProcess = new ProcessBuilder("ffmpeg", "-fflags", "nobuffer", "-f", "s16le", "-acodec", "pcm_s16le", "-ac", "2", "-ar", "44100", "-i", "pipe:", "-f", "mp3", "-codec:a", "libmp3lame", "-b:a", "128k", "-").start();
+			audioProcess = new ProcessBuilder("ffmpeg", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-f", "s16le", "-acodec", "pcm_s16le", "-ac", "2", "-ar", "48000", "-i", "pipe:", "-f", "mp3", "-b:a", "128k", "-").start();
 			audioIs = audioProcess.getInputStream();
 			audioOs = audioProcess.getOutputStream();
-			/*
 			new Thread(() -> {
 				try {
 					InputStream err = audioProcess.getErrorStream();
@@ -86,7 +84,6 @@ public class DisplayInfo {
 					e.printStackTrace();
 				}
 			}).start();
-			*/
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

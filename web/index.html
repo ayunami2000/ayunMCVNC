@@ -14,17 +14,13 @@
 
     const cmn = context.createChannelMerger(1);
 
-    function play(ch, of) {
+    function play(ch) {
         const source = context.createBufferSource();
 
         source.buffer = ch;
         source.connect(cmn);
 
-        if (of > 1) {
-            source.start(0, of - 1);
-        } else {
-            source.start(1 - of);
-        }
+        source.start();
     }
 
     panner.maxDistance = 16.1;
@@ -97,7 +93,7 @@
             } else {
                 if (!far) {
                     context.decodeAudioData(e.data, bf => {
-                        play(bf, 0);
+                        play(bf);
                     }, err => console.error(err));
                 }
             }

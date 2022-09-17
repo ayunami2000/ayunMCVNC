@@ -18,7 +18,8 @@ public class ServerQemuAudio {
 
 	public static ServerQemuAudio decode(InputStream in) throws IOException {
 		DataInputStream dataInput = new DataInputStream(in);
-		dataInput.readFully(new byte[2]);
+		dataInput.read();
+		if (dataInput.read() != 1) return null;
 		int operation = dataInput.readUnsignedShort();
 		if (operation == 2) {
 			int length = dataInput.readInt();

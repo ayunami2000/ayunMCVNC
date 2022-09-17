@@ -65,9 +65,11 @@ public class ServerEventHandler {
 							break;
 						case 0xFF:
 							ServerQemuAudio qemuAudio = ServerQemuAudio.decode(in);
-							Consumer<byte[]> qemuAudioListener = session.getConfig().getQemuAudioListener();
-							if (qemuAudioListener != null) {
-								qemuAudioListener.accept(qemuAudio.getAudio());
+							if (qemuAudio != null) {
+								Consumer<byte[]> qemuAudioListener = session.getConfig().getQemuAudioListener();
+								if (qemuAudioListener != null) {
+									qemuAudioListener.accept(qemuAudio.getAudio());
+								}
 							}
 							break;
 						default:

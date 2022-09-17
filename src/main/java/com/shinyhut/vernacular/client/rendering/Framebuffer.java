@@ -60,15 +60,15 @@ public class Framebuffer {
 					DataOutputStream dos = new DataOutputStream(session.getOutputStream());
 					dos.write(255);
 					dos.write(1);
-					dos.writeShort(0);
+					dos.writeShort(2);
+					dos.write(3); // channel format (S16)
+					dos.write(session.getConfig().getAudioChannelCountSupplier().get()); // num of channels
+					dos.writeInt(session.getConfig().getAudioFrequencySupplier().get()); // frequency
 					dos.flush();
 
 					dos.write(255);
 					dos.write(1);
-					dos.writeShort(2);
-					dos.write(0); // channel format (U8)
-					dos.write(session.getConfig().getAudioChannelCountSupplier().get()); // num of channels
-					dos.writeInt(session.getConfig().getAudioFrequencySupplier().get()); // frequency
+					dos.writeShort(0);
 					dos.flush();
 				} else {
 					renderers.get(rectangle.getEncoding()).render(in, frame, rectangle);
