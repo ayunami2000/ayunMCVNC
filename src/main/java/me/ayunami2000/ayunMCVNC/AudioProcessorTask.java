@@ -1,6 +1,5 @@
 package me.ayunami2000.ayunMCVNC;
 
-import de.sciss.jump3r.lowlevel.LameEncoder;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -11,9 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-import javax.sound.sampled.AudioFormat;
-import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,19 +18,13 @@ import java.util.stream.Collectors;
 class AudioProcessorTask extends BukkitRunnable {
 	private final Object lock = new Object();
 	private final AudioServer ws;
-	private final AudioFormat audioFormat = new AudioFormat(44100, 16, 2, true, false);
-	private final AudioFormat audioFormatOut = new AudioFormat(44100, 16, 2, true, false);
 
 	AudioProcessorTask() {
 		this.ws = new AudioServer(28819);
-		// this.ws.start();
 	}
 
 	public synchronized void cancel() throws IllegalStateException {
-		// try {
 		this.ws.stop();
-		// } catch (InterruptedException e) {
-		// }
 		super.cancel();
 	}
 
@@ -43,14 +34,16 @@ class AudioProcessorTask extends BukkitRunnable {
 			Collection<DisplayInfo> displays = DisplayInfo.displays.values();
 			for (DisplayInfo display : displays) {
 				if (!display.audio) continue;
-				// if (display.currentAudio.size() < (audioFormat.getSampleRate() * audioFormat.getChannels()) / 2) continue; // try to send at least every half-second of audio
-				if (display.currentAudio.size() == 0) continue;
-
-				int len = (int) (1000 * display.currentAudio.size() / (audioFormat.getSampleRate() * audioFormat.getChannels()));
-				byte[] aud = display.currentAudio.toByteArray();
-				display.currentAudio.reset();
-				if (Arrays.equals(aud, new byte[aud.length])) continue;
-				aud = encodePcmToMp3(aud, audioFormat, audioFormatOut);
+				byte[] aud;
+				try {
+					int len = display.audioIs.available();
+					if (len == 0) continue;
+					aud = new byte[len];
+					display.audioIs.read(aud, 0, len);
+				} catch (IOException e) {
+					e.printStackTrace();
+					continue;
+				}
 
 				Location myPos = display.location.clone().add(display.locEnd).multiply(0.5);
 
@@ -72,7 +65,7 @@ class AudioProcessorTask extends BukkitRunnable {
 						pos = Main.rotateVectorCC(pos, new Vector(1, 0, 0), (float) (pitch * Math.PI / 180.0));
 						//pos = new Vec3d(pos.x * Math.cos(yaw) + pos.z * Math.sin(yaw), pos.y - (pitch / 90), pos.z * Math.cos(yaw) - pos.x * Math.sin(yaw));
 						if (webSocket.isOpen()) {
-							webSocket.write(new TextWebSocketFrame(pos.getX() + "," + pos.getY() + "," + pos.getZ() + "," + len));
+							webSocket.write(new TextWebSocketFrame(pos.getX() + "," + pos.getY() + "," + pos.getZ()));
 							webSocket.write(new BinaryWebSocketFrame(Unpooled.wrappedBuffer(aud)));
 							webSocket.flush();
 						}
@@ -80,25 +73,5 @@ class AudioProcessorTask extends BukkitRunnable {
 				}
 			}
 		}
-	}
-
-	public byte[] encodePcmToMp3(byte[] pcm, AudioFormat inputFormat, AudioFormat outputFormat) {
-		LameEncoder encoder = new LameEncoder(inputFormat, outputFormat);
-
-		ByteArrayOutputStream mp3 = new ByteArrayOutputStream();
-		byte[] buffer = new byte[encoder.getPCMBufferSize()];
-
-		int bytesToTransfer = Math.min(buffer.length, pcm.length);
-		int bytesWritten;
-		int currentPcmPosition = 0;
-		while (0 < (bytesWritten = encoder.encodeBuffer(pcm, currentPcmPosition, bytesToTransfer, buffer))) {
-			currentPcmPosition += bytesToTransfer;
-			bytesToTransfer = Math.min(buffer.length, pcm.length - currentPcmPosition);
-
-			mp3.write(buffer, 0, bytesWritten);
-		}
-
-		encoder.close();
-		return mp3.toByteArray();
 	}
 }

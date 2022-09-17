@@ -5,31 +5,50 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 </head>
 <body>
-<button onclick="doit(this);">connect</button>
+<button onclick="window.doit(this);">connect</button>
+<script type="text/javascript" src="jsmad.wrapper.js"></script>
 <script>
-    const queue = [];
+    window.doit = function() {
+        alert("Still loading, please wait!");
+    };
+
+    function makeAudioBuffer(pcmArrayBuffer) {
+        const interleavedPcmData = new DataView(pcmArrayBuffer);
+        const audioBuffer = new AudioBuffer({
+            length: pcmArrayBuffer.byteLength / 2 / 2,
+            numberOfChannels: 2,
+            sampleRate: 44100
+        });
+        const planarChannelDatas = [];
+        planarChannelDatas.push(audioBuffer.getChannelData(0));
+        planarChannelDatas.push(audioBuffer.getChannelData(1));
+        for (let i = 0; i < interleavedPcmData.byteLength; i += 2) {
+            const channelNumber = i / 2 % 2;
+            const value = interleavedPcmData.getInt16(i, true);
+            planarChannelDatas[channelNumber][Math.floor(i / 2 / 2)] = value < 0 ? value / 32768 : value / 32767;
+        }
+        audioBuffer.copyToChannel(planarChannelDatas[0], 0, 0);
+        audioBuffer.copyToChannel(planarChannelDatas[1], 1, 0);
+        return audioBuffer;
+    }
 
     let context = new AudioContext(),
         panner = context.createPanner(),
-        generator = new MediaStreamTrackGenerator({kind: 'audio'}),
-        writer = generator.writable.getWriter(),
-        decoder = new AudioDecoder({
-            output: audioData => {
-                fardWrap(audioData);
-            },
-            error: e => console.error(e)
-        }),
+        decoder = new Module.Decoder(),
         doneit = false,
         far = true;
 
-    decoder.configure({
-        codec: "mp3",
-        sampleRate: 44100,
-        numberOfChannels: 2
-    });
-
     const cmn = context.createChannelMerger(1);
-    (new MediaStreamAudioSourceNode(context, {mediaStream: new MediaStream([generator])})).connect(cmn);
+
+    function play(ch) {
+        const source = context.createBufferSource();
+
+        source.buffer = ch;
+        source.connect(cmn);
+
+        source.start();
+    }
+
     panner.maxDistance = 16.1;
     panner.rolloffFactor = 1;
     panner.distanceModel = "linear";
@@ -62,13 +81,7 @@
         return "";
     }
 
-    let lastTime = Date.now();
-    let avgTime = -1;
-
-    let ts = 0;
-    let dur = 0;
-
-    function doit(elem) {
+    window.doit = function(elem) {
         if (doneit) return;
         const uname = prompt("Please enter your username in-game:", getCookie("uname"));
         if (!uname) return;
@@ -102,37 +115,35 @@
                     panner.positionX.value = +pos[0];
                     panner.positionY.value = +pos[1];
                     panner.positionZ.value = +pos[2];
-                    dur = +pos[3];
                 }
             } else {
                 if (!far) {
-                    decoder.decode(new EncodedAudioChunk({type: 'key', data: e.data, timestamp: ts * 1000, duration: dur * 1000}));
-                    ts += dur;
-                    const nowwow = Date.now();
-                    if (avgTime == -1) avgTime = nowwow - lastTime;
-                    avgTime = (avgTime + (nowwow - lastTime)) / 2;
-                    lastTime = nowwow;
+                    var src = new Uint8Array(e.data);
+
+                    var ps = src.length;
+                    var ptr = Module._malloc(ps);
+
+                    var arr = new Uint8Array(Module.HEAPU8.buffer, ptr, ps);
+                    var portion = new Uint8Array(e.data, 0, ps);
+                    arr.set(portion, 0);
+
+                    decoder.addFragment(ptr, ps);
+
+                    Module._malloc(256);
                 }
             }
         };
-    }
 
-    function fard() {
-        if (queue.length >= 10) {
-            for (let i = 0; i < 10; i++) writer.write(queue.shift());
-        }
-        setTimeout(fard, 250);
+        setInterval(() => {
+            if (decoder.hasMore()) {
+                var audio = decoder.decode(20);
+                if (audio) {
+                    console.log(audio);
+                    play(audio);
+                }
+            }
+        }, 0);
     }
-
-    function fardWrap(ad) {
-        if (queue.length > 40) {
-            // writer.write(ad);
-        } else {
-            queue.push(ad);
-        }
-    }
-
-    fard();
 </script>
 </body>
 </html>

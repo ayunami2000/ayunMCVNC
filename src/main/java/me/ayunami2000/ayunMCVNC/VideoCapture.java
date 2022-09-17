@@ -302,7 +302,7 @@ class VideoCaptureVnc extends VideoCaptureBase {
 				if (displayInfo.audio) {
 					config.setQemuAudioListener(bytes -> {
 						try {
-							displayInfo.currentAudio.write(bytes);
+							if (displayInfo.audioOs != null) displayInfo.audioOs.write(bytes);
 							DatagramPacket dpSend = new DatagramPacket(bytes, bytes.length, InetAddress.getLoopbackAddress(), displayInfo.uniquePort);
 							displayInfo.audioSocket.send(dpSend);
 						} catch (IOException e) {
@@ -1351,7 +1351,7 @@ public class VideoCapture extends Thread {
 			@Override
 			public void onFrame(byte[] frame) {
 				try {
-					displayInfo.currentAudio.write(frame);
+					if (displayInfo.audioOs != null) displayInfo.audioOs.write(frame);
 					DatagramPacket dpSend = new DatagramPacket(frame, frame.length, InetAddress.getLoopbackAddress(), displayInfo.uniquePort);
 					displayInfo.audioSocket.send(dpSend);
 				} catch (IOException e) {
