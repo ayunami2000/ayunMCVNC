@@ -312,16 +312,8 @@ class VideoCaptureVnc extends VideoCaptureBase {
 					config.setQemuAudioListener(bytes -> {
 						if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
 							if (displayInfo.audioOs != null && !Arrays.equals(bytes, new byte[bytes.length])) {
-								displayInfo.audioLock.lock();
-								try {
-									displayInfo.audioOs.write(bytes);
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-								displayInfo.audioLastWrite = System.currentTimeMillis();
-								displayInfo.audioLock.unlock();
-								/*
 								new Thread(() -> {
+									displayInfo.audioLock.lock();
 									try {
 										displayInfo.audioOs.write(bytes);
 									} catch (IOException e) {
@@ -330,7 +322,6 @@ class VideoCaptureVnc extends VideoCaptureBase {
 									displayInfo.audioLastWrite = System.currentTimeMillis();
 									displayInfo.audioLock.unlock();
 								}).start();
-								*/
 							}
 						}
 					});

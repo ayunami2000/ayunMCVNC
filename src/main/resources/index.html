@@ -5,12 +5,15 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 </head>
 <body>
+<input type="checkbox" onclick="set3D(this.checked);" checked/> Toggle 3D
+<br/>
 <button onclick="doit(this);">connect</button>
 <script>
     let context = new AudioContext(),
         panner = context.createPanner(),
         doneit = false,
-        far = true;
+        far = true,
+        threeDee = true;
 
     const cmn = context.createChannelMerger(1);
 
@@ -18,7 +21,7 @@
         const source = context.createBufferSource();
 
         source.buffer = ch;
-        source.connect(cmn);
+        source.connect(threeDee ? cmn : context.destination);
 
         source.start();
     }
@@ -53,6 +56,10 @@
             }
         }
         return "";
+    }
+
+    function set3D(val) {
+        threeDee = val;
     }
 
     function doit(elem) {
