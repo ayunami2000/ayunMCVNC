@@ -7,6 +7,9 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
+import me.ayunami2000.ayunMCVNC.Main;
+
+import java.io.File;
 
 public class HttpServerHandler extends ChannelInboundHandlerAdapter {
 	WebSocketServerHandshaker handshaker;
@@ -24,6 +27,8 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
 				ctx.pipeline().replace(this, "websocketHandler", new WebSocketHandler());
 
 				handleHandshake(ctx, httpRequest);
+			} else {
+				ctx.pipeline().replace(this, "fileHandler", new HttpStaticFileServerHandler(Main.plugin.getDataFolder().getAbsolutePath() + File.separatorChar + "web"));
 			}
 		}
 	}

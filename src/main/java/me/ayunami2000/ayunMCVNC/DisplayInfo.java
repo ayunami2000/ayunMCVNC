@@ -11,6 +11,11 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.net.DatagramSocket;
+import java.net.ServerSocket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -39,6 +44,8 @@ public class DisplayInfo {
 	public boolean paused;
 
 	public BufferedImage currentFrame = null;
+	public DatagramSocket audioSocket;
+	public int uniquePort;
 	public OutputStream audioOs;
 	public InputStream audioIs;
 	public Process audioProcess;
@@ -67,25 +74,67 @@ public class DisplayInfo {
 		FrameProcessorTask frameProcessorTask = new FrameProcessorTask(this, this.mapIds.size(), this.width);
 		Main.tasks.add(task1 = frameProcessorTask.runTaskTimerAsynchronously(Main.plugin, 0, 1));
 
-		try {
-			audioProcess = new ProcessBuilder("ffmpeg", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-f", "s16le", "-acodec", "pcm_s16le", "-ac", "2", "-ar", "48000", "-i", "pipe:", "-f", "mp3", "-b:a", "128k", "-").start();
-			audioIs = audioProcess.getInputStream();
-			audioOs = audioProcess.getOutputStream();
-			new Thread(() -> {
-				try {
-					InputStream err = audioProcess.getErrorStream();
-					while (audioProcess.isAlive()) {
-						int avail = err.available();
-						byte[] errBytes = new byte[avail];
-						err.read(errBytes, 0, avail);
-						System.out.print(new String(errBytes));
+		if (Main.plugin.audioUdpEnabled) {
+			switch (Main.plugin.audioUdpPortMode) {
+				case 1:
+					try {
+						ServerSocket ss = new ServerSocket(0);
+						uniquePort = ss.getLocalPort();
+						ss.close();
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
-				} catch (Exception e) {
+					break;
+				case 0:
+				default:
+					uniquePort = (18000 + mapIds.get(0));
+			}
+
+			System.out.println(uniquePort);
+
+			try {
+				audioSocket = new DatagramSocket();
+				audioSocket.setReuseAddress(true);
+			} catch (SocketException e) {
+				e.printStackTrace();
+			}
+		}
+
+		if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
+			if (Main.plugin.ffmpegEnabled) {
+				try {
+					if (Main.plugin.ffmpegParams.isEmpty()) {
+						String sampleFormat = Main.plugin.audioSampleFormats.get(Main.plugin.audioSampleFormat);
+						audioProcess = new ProcessBuilder("ffmpeg", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-f", sampleFormat, "-acodec", "pcm_" + sampleFormat, "-ac", Main.plugin.audioChannelNum + "", "-ar", Main.plugin.audioFrequency + "", "-i", "pipe:", "-f", "mp3", "-b:a", "128k", "-").start();
+					} else {
+						audioProcess = new ProcessBuilder(Main.plugin.ffmpegParams).start();
+					}
+					audioIs = audioProcess.getInputStream();
+					audioOs = audioProcess.getOutputStream();
+					new Thread(() -> {
+						try {
+							InputStream err = audioProcess.getErrorStream();
+							while (audioProcess.isAlive()) {
+								int avail = err.available();
+								byte[] errBytes = new byte[avail];
+								err.read(errBytes, 0, avail);
+								System.out.print(new String(errBytes));
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}).start();
+				} catch (IOException e) {
 					e.printStackTrace();
 				}
-			}).start();
-		} catch (IOException e) {
-			e.printStackTrace();
+			} else {
+				try {
+					audioIs = new PipedInputStream();
+					audioOs = new PipedOutputStream((PipedInputStream) audioIs);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 

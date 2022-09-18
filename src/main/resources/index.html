@@ -10,17 +10,27 @@
     let context = new AudioContext(),
         panner = context.createPanner(),
         doneit = false,
-        far = true;
+        far = true,
+        queue = [];
 
     const cmn = context.createChannelMerger(1);
 
     function play(ch) {
         const source = context.createBufferSource();
 
+        source.onended = function() {
+            const index = queue.indexOf(source);
+            if (index > -1) {
+                source.splice(index, 1);
+            }
+        };
+
         source.buffer = ch;
         source.connect(cmn);
 
-        source.start();
+        source.start(queue.reduce((a, b) => a.duration + b.duration));
+
+        queue.push(ch);
     }
 
     panner.maxDistance = 16.1;

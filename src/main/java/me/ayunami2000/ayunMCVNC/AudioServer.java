@@ -27,7 +27,6 @@ public class AudioServer {
 			b.option(ChannelOption.SO_BACKLOG, 1024);
 			b.group(bossGroup, workerGroup)
 					.channel(NioServerSocketChannel.class)
-					//.handler(new LoggingHandler(LogLevel.INFO))
 					.childHandler(new HTTPInitializer());
 
 			b.bind(port).sync();

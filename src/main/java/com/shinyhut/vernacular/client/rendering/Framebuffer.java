@@ -61,7 +61,7 @@ public class Framebuffer {
 					dos.write(255);
 					dos.write(1);
 					dos.writeShort(2);
-					dos.write(3); // channel format (S16)
+					dos.write(session.getConfig().getAudioFormatSupplier().get()); // channel format
 					dos.write(session.getConfig().getAudioChannelCountSupplier().get()); // num of channels
 					dos.writeInt(session.getConfig().getAudioFrequencySupplier().get()); // frequency
 					dos.flush();

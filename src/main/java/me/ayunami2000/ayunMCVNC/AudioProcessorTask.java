@@ -11,6 +11,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
@@ -18,14 +20,16 @@ import java.util.stream.Collectors;
 
 class AudioProcessorTask extends BukkitRunnable {
 	public static final ReentrantLock lock = new ReentrantLock();
-	private final AudioServer ws;
+	private AudioServer ws;
 
 	AudioProcessorTask() {
-		this.ws = new AudioServer(28819);
+		if (Main.plugin.httpEnabled) {
+			this.ws = new AudioServer(Main.plugin.httpPort);
+		}
 	}
 
 	public synchronized void cancel() throws IllegalStateException {
-		this.ws.stop();
+		if (ws != null) this.ws.stop();
 		super.cancel();
 	}
 
@@ -46,30 +50,41 @@ class AudioProcessorTask extends BukkitRunnable {
 					continue;
 				}
 
-				Location myPos = display.location.clone().add(display.locEnd).multiply(0.5);
+				if (Main.plugin.audioUdpEnabled) {
+					try {
+						DatagramPacket dpSend = new DatagramPacket(aud, aud.length, InetAddress.getLoopbackAddress(), display.uniquePort);
+						display.audioSocket.send(dpSend);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
 
-				List<Player> playerList = Bukkit.getOnlinePlayers().stream().filter(player -> DisplayInfo.getNearest(player, 256) == display).collect(Collectors.toList());
-				// List<Player> playerList = Bukkit.getOnlinePlayers().stream().filter(player -> player.getLocation().distanceSquared(myPos) <= 256).collect(Collectors.toList());
+				if (Main.plugin.httpEnabled) {
+					Location myPos = display.location.clone().add(display.locEnd).multiply(0.5);
 
-				if (playerList.isEmpty()) continue;
+					List<Player> playerList = Bukkit.getOnlinePlayers().stream().filter(player -> DisplayInfo.getNearest(player, 256) == display).collect(Collectors.toList());
+					// List<Player> playerList = Bukkit.getOnlinePlayers().stream().filter(player -> player.getLocation().distanceSquared(myPos) <= 256).collect(Collectors.toList());
 
-				List<String> names = playerList.stream().map(player -> player.getName()).collect(Collectors.toList());
+					if (playerList.isEmpty()) continue;
 
-				for (Channel webSocket : AudioServer.wsList.keySet()) {
-					String s = AudioServer.wsList.get(webSocket);
-					if (names.contains(s)) {
-						Player player = Bukkit.getPlayerExact(s);
-						Location loc = player.getLocation();
-						float yaw = loc.getYaw();
-						float pitch = loc.getPitch();
-						Vector pos = new Vector(loc.getX() - myPos.getX(), loc.getY() - myPos.getY(), loc.getZ() - myPos.getZ());
-						pos = Main.rotateVectorCC(pos, new Vector(0, 1, 0), (float) (yaw * Math.PI / 180.0));
-						pos = Main.rotateVectorCC(pos, new Vector(1, 0, 0), (float) (pitch * Math.PI / 180.0));
-						//pos = new Vec3d(pos.x * Math.cos(yaw) + pos.z * Math.sin(yaw), pos.y - (pitch / 90), pos.z * Math.cos(yaw) - pos.x * Math.sin(yaw));
-						if (webSocket.isOpen()) {
-							webSocket.write(new TextWebSocketFrame(pos.getX() + "," + pos.getY() + "," + pos.getZ()));
-							webSocket.write(new BinaryWebSocketFrame(Unpooled.wrappedBuffer(aud)));
-							webSocket.flush();
+					List<String> names = playerList.stream().map(player -> player.getName()).collect(Collectors.toList());
+
+					for (Channel webSocket : AudioServer.wsList.keySet()) {
+						String s = AudioServer.wsList.get(webSocket);
+						if (names.contains(s)) {
+							Player player = Bukkit.getPlayerExact(s);
+							Location loc = player.getLocation();
+							float yaw = loc.getYaw();
+							float pitch = loc.getPitch();
+							Vector pos = new Vector(loc.getX() - myPos.getX(), loc.getY() - myPos.getY(), loc.getZ() - myPos.getZ());
+							pos = Main.rotateVectorCC(pos, new Vector(0, 1, 0), (float) (yaw * Math.PI / 180.0));
+							pos = Main.rotateVectorCC(pos, new Vector(1, 0, 0), (float) (pitch * Math.PI / 180.0));
+							//pos = new Vec3d(pos.x * Math.cos(yaw) + pos.z * Math.sin(yaw), pos.y - (pitch / 90), pos.z * Math.cos(yaw) - pos.x * Math.sin(yaw));
+							if (webSocket.isOpen()) {
+								webSocket.write(new TextWebSocketFrame(pos.getX() + "," + pos.getY() + "," + pos.getZ()));
+								webSocket.write(new BinaryWebSocketFrame(Unpooled.wrappedBuffer(aud)));
+								webSocket.flush();
+							}
 						}
 					}
 				}

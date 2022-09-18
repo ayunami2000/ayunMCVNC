@@ -1,3 +1,40 @@
+# http/ws server settings
+http:
+  # enabled
+  enabled: true
+  # port
+  port: 8819
+# audio UDP server settings
+audio_udp:
+  # enabled
+  enabled: false
+  # port mapping method
+  #   0 - first map ID + 18000
+  #   1 - random available port
+  method: 0
+# audio settings
+audio:
+  # ffmpeg settings
+  ffmpeg:
+    # use ffmpeg
+    enabled: true
+    # full ffmpeg command-line (leave blank for default)
+    # e.g. [ "ffmpeg", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-f", "s16le", "-acodec", "pcm_s16le", "-ac", "2", "-ar", "48000", "-i", "pipe:", "-f", "mp3", "-b:a", "128k", "-" ]
+    params: []
+  # input format (always PCM)
+  format:
+    # sample format
+    #   0 - u8
+    #   1 - s8
+    #   2 - u16le
+    #   3 - s16le
+    #   4 - u32le
+    #   5 - s32le
+    sample_format: 3
+    # channel count
+    channels: 2
+    # sample rate
+    frequency: 48000
 # stores each active display
 displays: {}
 # stores unused map IDs

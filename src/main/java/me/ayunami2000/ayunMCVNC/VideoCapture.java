@@ -20,6 +20,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
@@ -251,8 +252,9 @@ class VideoCaptureVnc extends VideoCaptureBase {
 
 		config.setShared(true);
 
-		config.setAudioChannelCountSupplier(() -> 2);
-		config.setAudioFrequencySupplier(() -> 48000);
+		config.setAudioFormatSupplier(() -> Main.plugin.audioSampleFormat);
+		config.setAudioChannelCountSupplier(() -> Main.plugin.audioChannelNum);
+		config.setAudioFrequencySupplier(() -> Main.plugin.audioFrequency);
 
 		// config.setUsernameSupplier(() -> MakiDesktop.getUserPass()[0]);
 		// config.setPasswordSupplier(() -> MakiDesktop.getUserPass()[1]);
@@ -300,17 +302,19 @@ class VideoCaptureVnc extends VideoCaptureBase {
 						port = m.group(2);
 				client.stop();
 				config.setEnableQemuAudioEncoding(displayInfo.audio);
-				if (displayInfo.audio) {
+				if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio) {
 					config.setQemuAudioListener(bytes -> {
 						new Thread(() -> {
-							try {
-								if (displayInfo.audioOs != null) {
-									AudioProcessorTask.lock.lock();
-									displayInfo.audioOs.write(bytes);
-									AudioProcessorTask.lock.unlock();
+							if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
+								try {
+									if (displayInfo.audioOs != null) {
+										AudioProcessorTask.lock.lock();
+										displayInfo.audioOs.write(bytes);
+										AudioProcessorTask.lock.unlock();
+									}
+								} catch (IOException e) {
+									e.printStackTrace();
 								}
-							} catch (IOException e) {
-								e.printStackTrace();
 							}
 						}).start();
 					});
@@ -1353,17 +1357,19 @@ public class VideoCapture extends Thread {
 
 		videoCapture.displayInfo = displayInfo;
 
-		if (displayInfo.audio && !displayInfo.vnc) videoCapture.audioCapture = new AudioCapture(videoCapture) {
+		if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio && !displayInfo.vnc) videoCapture.audioCapture = new AudioCapture(videoCapture) {
 			@Override
 			public void onFrame(byte[] frame) {
 				new Thread(() -> {
-					try {
-						if (displayInfo.audioOs != null) {
-							AudioProcessorTask.lock.lock();
-							displayInfo.audioOs.write(frame);
-							AudioProcessorTask.lock.unlock();
+					if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
+						try {
+							if (displayInfo.audioOs != null) {
+								AudioProcessorTask.lock.lock();
+								displayInfo.audioOs.write(frame);
+								AudioProcessorTask.lock.unlock();
+							}
+						} catch (IOException e) {
 						}
-					} catch (IOException e) {
 					}
 				}).start();
 			}

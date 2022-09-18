@@ -20,12 +20,18 @@ public class VernacularConfig {
             return 2;
         }
     };
-    private Supplier<Integer> audioFrequencySupplier = new Supplier<Integer>() {
-        @Override
-        public Integer get() {
-            return 22050;
-        }
-    };
+	private Supplier<Integer> audioFrequencySupplier = new Supplier<Integer>() {
+		@Override
+		public Integer get() {
+			return 48000;
+		}
+	};
+	private Supplier<Integer> audioFormatSupplier = new Supplier<Integer>() {
+		@Override
+		public Integer get() {
+			return 3;
+		}
+	};
     private Consumer<VncException> errorListener;
     private Consumer<Image> screenUpdateListener;
     private Consumer<Void> bellListener;
@@ -77,13 +83,21 @@ public class VernacularConfig {
         this.audioChannelCountSupplier = audioChannelCountSupplier;
     }
 
-    public Supplier<Integer> getAudioFrequencySupplier() {
-        return audioFrequencySupplier;
-    }
+	public Supplier<Integer> getAudioFrequencySupplier() {
+		return audioFrequencySupplier;
+	}
 
-    public void setAudioFrequencySupplier(Supplier<Integer> audioFrequencySupplier) {
-        this.audioFrequencySupplier = audioFrequencySupplier;
-    }
+	public void setAudioFrequencySupplier(Supplier<Integer> audioFrequencySupplier) {
+		this.audioFrequencySupplier = audioFrequencySupplier;
+	}
+
+	public Supplier<Integer> getAudioFormatSupplier() {
+		return audioFormatSupplier;
+	}
+
+	public void setAudioFormatSupplier(Supplier<Integer> audioFormatSupplier) {
+		this.audioFormatSupplier = audioFormatSupplier;
+	}
 
     public Consumer<VncException> getErrorListener() {
         return errorListener;
