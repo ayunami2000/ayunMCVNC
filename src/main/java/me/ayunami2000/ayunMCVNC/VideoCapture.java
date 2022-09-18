@@ -30,9 +30,11 @@ import java.util.regex.Pattern;
 // ffplay udp://127.0.0.1:1337
 // ffplay -f s16le -acodec pcm_s16le -ac 2 -ar 48000 udp://127.0.0.1:1338
 
-// ffmpeg -fflags nobuffer -f s16le -acodec pcm_s16le -ac 2 -ar 44100 -i udp://127.0.0.1:1327 -listen 1 -f ogg -movflags frag_keyframe+empty_moov http://127.0.0.1:8523
-// ffmpeg -fflags nobuffer -f s16le -acodec pcm_s16le -ac 2 -ar 44100 -i udp://127.0.0.1:1327 -f mp3 udp://127.0.0.1:5959
-// ffmpeg -fflags nobuffer -f s16le -acodec pcm_s16le -ac 2 -ar 44100 -i udp://127.0.0.1:1327 -f mp3 tcp://127.0.0.1:5959?listen=2&tcp_nodelay=1
+// ffmpeg -fflags nobuffer -f s16le -acodec pcm_s16le -ac 2 -ar 48000 -i udp://127.0.0.1:1327 -listen 1 -f ogg -movflags frag_keyframe+empty_moov http://127.0.0.1:8523
+// ffmpeg -fflags nobuffer -f s16le -acodec pcm_s16le -ac 2 -ar 48000 -i udp://127.0.0.1:1327 -f mp3 udp://127.0.0.1:5959
+// ffmpeg -fflags nobuffer -f s16le -acodec pcm_s16le -ac 2 -ar 48000 -i udp://127.0.0.1:1327 -f mp3 tcp://127.0.0.1:5959?listen=2&tcp_nodelay=1
+
+// TODO: FIX THREAD ISSUE THAT AFFECTS NON-VNC VIDEO
 
 class VideoCaptureBase extends Thread {
 	public boolean running = true;
