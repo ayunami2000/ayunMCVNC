@@ -28,7 +28,12 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
 
 				handleHandshake(ctx, httpRequest);
 			} else {
-				ctx.pipeline().replace(this, "fileHandler", new HttpStaticFileServerHandler(Main.plugin.getDataFolder().getAbsolutePath() + File.separatorChar + "web"));
+				HttpStaticFileServerHandler httpStaticFileServerHandler = new HttpStaticFileServerHandler(Main.plugin.getDataFolder().getAbsolutePath() + File.separatorChar + "web");
+				ctx.pipeline().replace(this, "fileHandler", httpStaticFileServerHandler);
+				try {
+					httpStaticFileServerHandler.channelRead0(ctx, (HttpRequest) msg);
+				} catch (Exception ignored) {
+				}
 			}
 		}
 	}

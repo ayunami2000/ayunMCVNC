@@ -21,7 +21,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -83,7 +85,10 @@ class VideoCaptureUDPServer extends VideoCaptureBase {
 			int currDest = Integer.parseInt(getDestPiece(false));
 			try {
 				byte[] buffer = new byte[1024 * 1024]; // 1 mb
-				socket = new DatagramSocket(currDest);
+				socket = new DatagramSocket(null);
+				socket.setReuseAddress(true);
+				socket.setSoTimeout(5000);
+				socket.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), currDest));
 				DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
 				ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -158,6 +163,7 @@ class VideoCaptureUDPServer extends VideoCaptureBase {
 					socket.close();
 				}
 			} catch (IOException e) {
+				e.printStackTrace();
 			}
 			if (!this.running) break;
 			if (displayInfo.paused || currDest == Integer.parseInt(getDestPiece(false))) {
@@ -304,19 +310,29 @@ class VideoCaptureVnc extends VideoCaptureBase {
 				config.setEnableQemuAudioEncoding(displayInfo.audio);
 				if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio) {
 					config.setQemuAudioListener(bytes -> {
-						new Thread(() -> {
-							if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
+						if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
+							if (displayInfo.audioOs != null && !Arrays.equals(bytes, new byte[bytes.length])) {
+								displayInfo.audioLock.lock();
 								try {
-									if (displayInfo.audioOs != null) {
-										AudioProcessorTask.lock.lock();
-										displayInfo.audioOs.write(bytes);
-										AudioProcessorTask.lock.unlock();
-									}
+									displayInfo.audioOs.write(bytes);
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
+								displayInfo.audioLastWrite = System.currentTimeMillis();
+								displayInfo.audioLock.unlock();
+								/*
+								new Thread(() -> {
+									try {
+										displayInfo.audioOs.write(bytes);
+									} catch (IOException e) {
+										e.printStackTrace();
+									}
+									displayInfo.audioLastWrite = System.currentTimeMillis();
+									displayInfo.audioLock.unlock();
+								}).start();
+								*/
 							}
-						}).start();
+						}
 					});
 				} else {
 					config.setQemuAudioListener(null);
@@ -1360,18 +1376,18 @@ public class VideoCapture extends Thread {
 		if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio && !displayInfo.vnc) videoCapture.audioCapture = new AudioCapture(videoCapture) {
 			@Override
 			public void onFrame(byte[] frame) {
-				new Thread(() -> {
-					if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
+				if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
+					if (displayInfo.audioOs != null && !Arrays.equals(frame, new byte[frame.length])) {
+						displayInfo.audioLock.lock();
 						try {
-							if (displayInfo.audioOs != null) {
-								AudioProcessorTask.lock.lock();
-								displayInfo.audioOs.write(frame);
-								AudioProcessorTask.lock.unlock();
-							}
+							displayInfo.audioOs.write(frame);
 						} catch (IOException e) {
+							e.printStackTrace();
 						}
+						displayInfo.audioLastWrite = System.currentTimeMillis();
+						displayInfo.audioLock.unlock();
 					}
-				}).start();
+				}
 			}
 		};
 

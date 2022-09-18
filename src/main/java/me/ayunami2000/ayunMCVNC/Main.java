@@ -61,10 +61,9 @@ public class Main extends JavaPlugin implements Listener {
 	public void onEnable() {
 		plugin = this;
 		saveDefaultConfig();
-		ImageManager manager = ImageManager.getInstance();
-		manager.init();
 
 		loadRestOfConfig();
+
 		if (httpEnabled) {
 			File webFolder = new File(this.getDataFolder(), "web");
 			if (!webFolder.exists() || !webFolder.isDirectory()) {
@@ -73,13 +72,16 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				webFolder.mkdir();
 				try {
-					InputStream link = getClass().getResourceAsStream("index.html");
-					Files.copy(link, new File(webFolder.getAbsoluteFile() + "index.html").toPath());
+					InputStream link = getClass().getResourceAsStream("/index.html");
+					Files.copy(link, new File(webFolder.getAbsoluteFile(), "index.html").toPath());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 		}
+
+		ImageManager manager = ImageManager.getInstance();
+		manager.init();
 
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvents(this, this);
@@ -129,12 +131,12 @@ public class Main extends JavaPlugin implements Listener {
 		}
 		if (this.getConfig().contains("audio")) {
 			ConfigurationSection audio = this.getConfig().getConfigurationSection("audio");
-			if (this.getConfig().contains("ffmpeg")) {
+			if (audio.contains("ffmpeg")) {
 				ConfigurationSection ffmpeg = audio.getConfigurationSection("ffmpeg");
 				ffmpegEnabled = ffmpeg.getBoolean("enabled", true);
 				ffmpegParams = ffmpeg.getStringList("params");
 			}
-			if (this.getConfig().contains("format")) {
+			if (audio.contains("format")) {
 				ConfigurationSection format = audio.getConfigurationSection("format");
 				audioSampleFormat = Math.abs(format.getInt("sample_format", 3)) % 6;
 				audioChannelNum = format.getInt("channels", 2);

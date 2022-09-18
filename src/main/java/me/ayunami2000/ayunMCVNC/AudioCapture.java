@@ -2,6 +2,8 @@ package me.ayunami2000.ayunMCVNC;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 public class AudioCapture extends Thread {
 	public boolean running = true;
@@ -35,8 +37,11 @@ public class AudioCapture extends Thread {
 		if (this.displayInfo == null) return;
 		while (this.isAlive() && this.running) {
 			try {
-				byte[] buffer = new byte[1024 * 1024]; // 1mb
-				this.socket = new DatagramSocket(this.port);
+				byte[] buffer = new byte[4096];
+				this.socket = new DatagramSocket(null);
+				socket.setReuseAddress(true);
+				socket.setSoTimeout(5000);
+				socket.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), this.port));
 				DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
 				while (this.isAlive() && this.running && !displayInfo.paused) {
@@ -52,6 +57,7 @@ public class AudioCapture extends Thread {
 					socket.close();
 				}
 			} catch (Exception e) {
+				e.printStackTrace();
 			}
 			if (!this.running) break;
 			do {

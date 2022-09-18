@@ -75,8 +75,7 @@ public class ImageManager implements Listener {
 		saveData();
 	}
 
-	public void recycle(int mapId) {
-		DisplayInfo.unusedMapIds.add(mapId);
+	public void recycle() {
 		getData().set("unused", DisplayInfo.unusedMapIds);
 		saveData();
 	}

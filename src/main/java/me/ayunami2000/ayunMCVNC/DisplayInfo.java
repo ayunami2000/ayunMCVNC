@@ -8,6 +8,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class DisplayInfo {
 	public static final Map<String, DisplayInfo> displays = new HashMap<>();
@@ -46,6 +48,8 @@ public class DisplayInfo {
 	public BufferedImage currentFrame = null;
 	public DatagramSocket audioSocket;
 	public int uniquePort;
+	public long audioLastWrite = 0;
+	public ReentrantLock audioLock = new ReentrantLock();
 	public OutputStream audioOs;
 	public InputStream audioIs;
 	public Process audioProcess;
@@ -105,7 +109,7 @@ public class DisplayInfo {
 				try {
 					if (Main.plugin.ffmpegParams.isEmpty()) {
 						String sampleFormat = Main.plugin.audioSampleFormats.get(Main.plugin.audioSampleFormat);
-						audioProcess = new ProcessBuilder("ffmpeg", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-f", sampleFormat, "-acodec", "pcm_" + sampleFormat, "-ac", Main.plugin.audioChannelNum + "", "-ar", Main.plugin.audioFrequency + "", "-i", "pipe:", "-f", "mp3", "-b:a", "128k", "-").start();
+						audioProcess = new ProcessBuilder("ffmpeg", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-thread_queue_size", "512", "-f", sampleFormat, "-acodec", "pcm_" + sampleFormat, "-ac", Main.plugin.audioChannelNum + "", "-ar", Main.plugin.audioFrequency + "", "-i", "pipe:", "-f", "mp3", "-").start();
 					} else {
 						audioProcess = new ProcessBuilder(Main.plugin.ffmpegParams).start();
 					}
@@ -166,6 +170,7 @@ public class DisplayInfo {
 		task1.cancel();
 		if (fr) {
 			unusedMapIds.addAll(this.mapIds);
+			ImageManager.getInstance().recycle();
 		}
 		if (audioProcess != null) {
 			audioProcess.destroy();

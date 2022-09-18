@@ -15,11 +15,9 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 class AudioProcessorTask extends BukkitRunnable {
-	public static final ReentrantLock lock = new ReentrantLock();
 	private AudioServer ws;
 
 	AudioProcessorTask() {
@@ -47,6 +45,10 @@ class AudioProcessorTask extends BukkitRunnable {
 					display.audioIs.read(aud, 0, len);
 				} catch (IOException e) {
 					e.printStackTrace();
+					continue;
+				}
+
+				if (System.currentTimeMillis() - display.audioLastWrite > 250) {
 					continue;
 				}
 
