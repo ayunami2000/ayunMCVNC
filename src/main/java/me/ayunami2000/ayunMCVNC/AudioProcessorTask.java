@@ -48,8 +48,8 @@ class AudioProcessorTask extends BukkitRunnable {
 
 				Location myPos = display.location.clone().add(display.locEnd).multiply(0.5);
 
-				// List<Player> playerList = Bukkit.getOnlinePlayers().stream().filter(player -> DisplayInfo.getNearest(player, 256) == display).collect(Collectors.toList());
-				List<Player> playerList = Bukkit.getOnlinePlayers().stream().filter(player -> player.getLocation().distanceSquared(myPos) <= 256).collect(Collectors.toList());
+				List<Player> playerList = Bukkit.getOnlinePlayers().stream().filter(player -> DisplayInfo.getNearest(player, 256) == display).collect(Collectors.toList());
+				// List<Player> playerList = Bukkit.getOnlinePlayers().stream().filter(player -> player.getLocation().distanceSquared(myPos) <= 256).collect(Collectors.toList());
 
 				if (playerList.isEmpty()) continue;
 
