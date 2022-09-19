@@ -45,7 +45,7 @@ public class WebSocketHandler extends ChannelInboundHandlerAdapter {
 					return;
 				}
 				Player thePlayer = Bukkit.getPlayerExact(message);
-				if (thePlayer == null) {
+				if (thePlayer == null || !thePlayer.hasPermission("ayunmcvnc.view")) {
 					conn.disconnect();
 					return;
 				}

@@ -75,6 +75,7 @@ class FramePacketSender extends BukkitRunnable {
 
 	private void sendToPlayer(Player player, List<PacketItem> packets) {
 		CraftPlayer craftPlayer = (CraftPlayer) player;
+		if (!player.hasPermission("ayunmcvnc.view")) return;
 		for (PacketItem packet : packets) {
 			if (packet != null && packet.packet != null) {
 				if (packet.display == DisplayInfo.getNearest(player, 4096)) {
