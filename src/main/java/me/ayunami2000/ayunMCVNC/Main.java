@@ -100,6 +100,7 @@ public class Main extends JavaPlugin implements Listener {
 			public void run() {
 				Set<Player> players = new HashSet<>(Bukkit.getOnlinePlayers());
 				for (Player player : players) {
+					if (!player.isOp()) continue;
 					Block tgtbl = player.getTargetBlock(null, 5);
 					if (tgtbl != null) ClickOnScreen.clickedOnBlock(tgtbl, player, false);
 				}
