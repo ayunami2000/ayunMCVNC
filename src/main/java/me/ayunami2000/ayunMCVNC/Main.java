@@ -157,6 +157,7 @@ public class Main extends JavaPlugin implements Listener {
 			case "create":
 				if (!canManage) {
 					sender.sendMessage("Error: You do not have permission to create displays!");
+					return true;
 				}
 				// name
 				// width
@@ -226,6 +227,7 @@ public class Main extends JavaPlugin implements Listener {
 			case "delete":
 				if (!canManage) {
 					sender.sendMessage("Error: You do not have permission to delete displays!");
+					return true;
 				}
 				if (args.length < 2) {
 					sender.sendMessage("Usage: /mcvnc delete <name>");
@@ -244,6 +246,7 @@ public class Main extends JavaPlugin implements Listener {
 			case "toggle":
 				if (!canManage) {
 					sender.sendMessage("Error: You do not have permission to toggle displays!");
+					return true;
 				}
 				if (args.length < 2) {
 					sender.sendMessage("Usage: /mcvnc toggle <name>");
@@ -261,6 +264,7 @@ public class Main extends JavaPlugin implements Listener {
 			case "move":
 				if (!canManage) {
 					sender.sendMessage("Error: You do not have permission to move displays!");
+					return true;
 				}
 				if (args.length < 2) {
 					sender.sendMessage("Usage: /mcvnc move <name>");
@@ -283,8 +287,9 @@ public class Main extends JavaPlugin implements Listener {
 				sender.sendMessage("Display moved!");
 				return true;
 			case "list":
-				if (!canInteract && !canManage) {
+				if (!canInteract) {
 					sender.sendMessage("Error: You do not have permission to list displays!");
+					return true;
 				}
 				sender.sendMessage("Displays:");
 				Set<String> displayIds = DisplayInfo.displays.keySet();
@@ -300,6 +305,7 @@ public class Main extends JavaPlugin implements Listener {
 			case "cb":
 				if (!canManage) {
 					sender.sendMessage("Error: You do not have permission to run this command!");
+					return true;
 				}
 				if (args.length > 2) {
 					DisplayInfo displayInfooo = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
@@ -339,6 +345,7 @@ public class Main extends JavaPlugin implements Listener {
 			case "type":
 				if (!canInteract) {
 					sender.sendMessage("Error: You do not have permission to type!");
+					return true;
 				}
 				if (args.length == 1 || args.length == 2) {
 					sender.sendMessage("Usage: /mcvnc type <name> <text>");
@@ -358,6 +365,7 @@ public class Main extends JavaPlugin implements Listener {
 			case "key":
 				if (!canInteract) {
 					sender.sendMessage("Error: You do not have permission to press keys!");
+					return true;
 				}
 				if (args.length == 1 || args.length == 2) {
 					sender.sendMessage("Usage: /mcvnc key <name> <keyname>\n§lWarning: Case sensitive!");
@@ -380,6 +388,7 @@ public class Main extends JavaPlugin implements Listener {
 			case "keystate":
 				if (!canInteract) {
 					sender.sendMessage("Error: You do not have permission to change key states!");
+					return true;
 				}
 				if (args.length == 1 || args.length == 2 || args.length == 3) {
 					sender.sendMessage("Usage: /mcvnc keystate <name> <down|up> <keyname>\n§lWarning: Case sensitive!");
@@ -403,6 +412,7 @@ public class Main extends JavaPlugin implements Listener {
 			case "press":
 				if (!canInteract) {
 					sender.sendMessage("Error: You do not have permission to hold keys!");
+					return true;
 				}
 				if (args.length == 1 || args.length == 2 || args.length == 3) {
 					sender.sendMessage("Usage: /mcvnc press <name> <duration> <keyname>\n§lWarning: Case sensitive!");
