@@ -27,6 +27,7 @@
 
         source.buffer = ch;
         source.connect(threeDee ? cmn : context.destination);
+        if (lastDur == -1) lastDur = ch.duration;
         source.start(context.currentTime + 0.1 + (lastDur - (bufferSize / 4)));
 
         lastDur = ch.duration;
