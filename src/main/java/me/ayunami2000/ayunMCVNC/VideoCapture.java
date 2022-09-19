@@ -87,7 +87,7 @@ class VideoCaptureUDPServer extends VideoCaptureBase {
 				byte[] buffer = new byte[1024 * 1024]; // 1 mb
 				socket = new DatagramSocket(null);
 				socket.setReuseAddress(true);
-				socket.setSoTimeout(5000);
+				socket.setSoTimeout(2500);
 				socket.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), currDest));
 				DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
@@ -151,19 +151,17 @@ class VideoCaptureUDPServer extends VideoCaptureBase {
 
 					if (currDest != Integer.parseInt(getDestPiece(false))) {
 						if (socket != null) {
-							socket.disconnect();
 							socket.close();
 						}
 						break;
 					}
 
 				}
-				if (socket != null) {
-					socket.disconnect();
-					socket.close();
-				}
 			} catch (IOException e) {
 				e.printStackTrace();
+			}
+			if (socket != null) {
+				socket.close();
 			}
 			if (!this.running) break;
 			if (displayInfo.paused || currDest == Integer.parseInt(getDestPiece(false))) {
@@ -185,7 +183,6 @@ class VideoCaptureUDPServer extends VideoCaptureBase {
 		super.cleanup();
 		running = false;
 		if (socket != null) {
-			socket.disconnect();
 			socket.close();
 		}
 	}
@@ -206,9 +203,11 @@ class VideoCaptureMjpeg extends VideoCaptureBase {
 						if (!currUrl.equals(getDestPiece(false))) in.close();
 					}
 				} catch (EOFException e) {
+					e.printStackTrace();
 				}
 				in.close();
 			} catch (IOException e) {
+				e.printStackTrace();
 			}
 			if (!this.running) break;
 			do {

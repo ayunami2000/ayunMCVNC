@@ -18,7 +18,6 @@ public class AudioCapture extends Thread {
 	public void cleanup() {
 		running = false;
 		if (socket != null) {
-			socket.disconnect();
 			socket.close();
 		}
 	}
@@ -40,7 +39,7 @@ public class AudioCapture extends Thread {
 				byte[] buffer = new byte[4096];
 				this.socket = new DatagramSocket(null);
 				socket.setReuseAddress(true);
-				socket.setSoTimeout(5000);
+				socket.setSoTimeout(2500);
 				socket.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), this.port));
 				DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
@@ -51,13 +50,11 @@ public class AudioCapture extends Thread {
 					System.arraycopy(packet.getData(), packet.getOffset(), res, 0, len);
 					onFrame(res);
 				}
-
-				if (socket != null) {
-					socket.disconnect();
-					socket.close();
-				}
 			} catch (Exception e) {
 				e.printStackTrace();
+			}
+			if (socket != null) {
+				socket.close();
 			}
 			if (!this.running) break;
 			do {

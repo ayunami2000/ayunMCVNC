@@ -49,10 +49,12 @@ public class WebSocketHandler extends ChannelInboundHandlerAdapter {
 					conn.disconnect();
 					return;
 				}
-				String key = RandomStringUtils.randomAlphanumeric(10).toUpperCase();
+				message = thePlayer.getName();
+				String key = RandomStringUtils.randomAlphanumeric(10).toLowerCase();
 				AudioServer.authList.put(conn, key);
 				AudioServer.nameList.put(key, message);
-				thePlayer.spigot().sendMessage(new ComponentBuilder("ayunMCVNC: It seems like you've tried to connect to audio! Please enter this code in the browser to continue: ").append(key).underlined(true).event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, key)).create());
+				conn.writeAndFlush(new TextWebSocketFrame("key"));
+				thePlayer.spigot().sendMessage(new ComponentBuilder("ayunMCVNC: It seems like you've tried to connect to audio!\nPlease enter this code in the browser to continue:\n").append(key).underlined(true).event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, key)).create());
 			} else if (msg instanceof CloseWebSocketFrame) {
 				AudioServer.wsList.remove(conn);
 				String xd = AudioServer.authList.remove(conn);

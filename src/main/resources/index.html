@@ -78,19 +78,22 @@
         socket.binaryType = 'arraybuffer';
         socket.onopen = () => {
             socket.send(uname);
-            const key = prompt("Please enter the code received in-game to connect!");
-            if (!key) {
-                socket.close();
-                return;
-            }
-            if (!key.match(/^[a-zA-Z0-9]{10}$/)) {
-                socket.close();
-                return;
-            }
-            socket.send(key);
         };
         socket.onmessage = e => {
             if (typeof e.data == "string") {
+                if (e.data == "key") {
+                    const key = prompt("Please enter the code received in-game to connect!");
+                    if (!key) {
+                        socket.close();
+                        return;
+                    }
+                    if (!key.match(/^[a-zA-Z0-9]{10}$/)) {
+                        socket.close();
+                        return;
+                    }
+                    socket.send(key);
+                    return;
+                }
                 const pos = e.data.split(",");
                 if (isNaN(+pos[0])) {
                     far = true;

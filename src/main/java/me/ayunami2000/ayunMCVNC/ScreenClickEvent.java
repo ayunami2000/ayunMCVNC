@@ -10,6 +10,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
 public class ScreenClickEvent implements Listener {
@@ -48,5 +49,10 @@ public class ScreenClickEvent implements Listener {
 			Block tgtbl = player.getTargetBlock(null, 5);
 			if (tgtbl != null) ClickOnScreen.clickedOnBlock(tgtbl, player, false);
 		}
+	}
+
+	@EventHandler
+	public void onPlayerQuit(PlayerQuitEvent event) {
+		AudioServer.wsList.values().remove(event.getPlayer().getName());
 	}
 }
