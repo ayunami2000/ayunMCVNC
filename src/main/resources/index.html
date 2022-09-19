@@ -73,7 +73,7 @@
         doneit = true;
         document.cookie = "uname=" + uname;
         elem.outerHTML = "";
-        const socket = new WebSocket("ws" + window.location.href.slice(2));
+        const socket = new WebSocket("ws" + window.location.href.slice(4));
         socket.binaryType = 'arraybuffer';
         socket.onopen = () => {
             socket.send(uname);
