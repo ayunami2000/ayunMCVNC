@@ -13,10 +13,10 @@
         panner = context.createPanner(),
         doneit = false,
         far = true,
-        threeDee = true;
+        threeDee = true,
+        lastDur = 0.25;
 
-    const cmn = context.createChannelMerger(1),
-          queue = [];
+    const cmn = context.createChannelMerger(1);
 
     function play(ch) {
         const source = context.createBufferSource();
@@ -24,7 +24,9 @@
         source.buffer = ch;
         source.connect(threeDee ? cmn : context.destination);
 
-        source.start();
+        source.start(context.currentTime + 0.25 + (lastDur - 0.25));
+
+        lastDur = ch.duration;
     }
 
     panner.maxDistance = 16.1;
@@ -101,20 +103,12 @@
             } else {
                 if (!far) {
                     context.decodeAudioData(e.data, bf => {
-                        if (queue.length < 10) {
-                            queue.push(bf);
-                        }
+                        play(bf);
                     }, err => console.error(err));
                 }
             }
         };
     }
-
-    setInterval(() => {
-        if (queue.length > 0) {
-            play(queue.shift());
-        }
-    }, 250);
 </script>
 </body>
 </html>
