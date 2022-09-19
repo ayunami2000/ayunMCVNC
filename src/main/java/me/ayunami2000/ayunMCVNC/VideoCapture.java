@@ -310,7 +310,7 @@ class VideoCaptureVnc extends VideoCaptureBase {
 				if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio) {
 					config.setQemuAudioListener(bytes -> {
 						if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
-							if (displayInfo.audioOs != null && !Arrays.equals(bytes, new byte[bytes.length])) {
+							if (displayInfo.audioOs != null/* && !Arrays.equals(bytes, new byte[bytes.length])*/) {
 								new Thread(() -> {
 									displayInfo.audioLock.lock();
 									try {
@@ -1367,7 +1367,7 @@ public class VideoCapture extends Thread {
 			@Override
 			public void onFrame(byte[] frame) {
 				if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
-					if (displayInfo.audioOs != null && !Arrays.equals(frame, new byte[frame.length])) {
+					if (displayInfo.audioOs != null/*  && !Arrays.equals(frame, new byte[frame.length])*/) {
 						displayInfo.audioLock.lock();
 						try {
 							displayInfo.audioOs.write(frame);
