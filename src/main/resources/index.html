@@ -73,11 +73,13 @@
         doneit = true;
         document.cookie = "uname=" + uname;
         elem.outerHTML = "";
-        const hrf = window.location.href;
-        const socket = new WebSocket("ws" + hrf.slice(4, hrf.endsWith("/") ? -1 : hrf.length) + "/audio");
+        const socket = new WebSocket("ws" + window.location.href.slice(2));
         socket.binaryType = 'arraybuffer';
         socket.onopen = () => {
             socket.send(uname);
+        };
+        socket.onclose = () => {
+            window.location.reload();
         };
         socket.onmessage = e => {
             if (typeof e.data == "string") {

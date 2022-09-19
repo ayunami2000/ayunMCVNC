@@ -1,5 +1,6 @@
 package me.ayunami2000.ayunMCVNC;
 
+import io.netty.channel.Channel;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -12,6 +13,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
+
+import java.util.Map;
 
 public class ScreenClickEvent implements Listener {
 	@EventHandler(priority = EventPriority.MONITOR)
@@ -53,6 +56,18 @@ public class ScreenClickEvent implements Listener {
 
 	@EventHandler
 	public void onPlayerQuit(PlayerQuitEvent event) {
-		AudioServer.wsList.values().remove(event.getPlayer().getName());
+		Channel channel = getKey(AudioServer.wsList, event.getPlayer().getName());
+		if (channel != null) {
+			channel.close();
+		}
+	}
+
+	private <K, V> K getKey(Map<K, V> map, V value) {
+		for (Map.Entry<K, V> entry : map.entrySet()) {
+			if (entry.getValue().equals(value)) {
+				return entry.getKey();
+			}
+		}
+		return null;
 	}
 }
