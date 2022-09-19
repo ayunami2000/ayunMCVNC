@@ -15,7 +15,8 @@
         far = true,
         threeDee = true;
 
-    const cmn = context.createChannelMerger(1);
+    const cmn = context.createChannelMerger(1),
+          queue = [];
 
     function play(ch) {
         const source = context.createBufferSource();
@@ -100,12 +101,20 @@
             } else {
                 if (!far) {
                     context.decodeAudioData(e.data, bf => {
-                        play(bf);
+                        if (queue.length < 10) {
+                            queue.push(bf);
+                        }
                     }, err => console.error(err));
                 }
             }
         };
     }
+
+    setInterval(() => {
+        if (queue.length > 0) {
+            play(queue.shift());
+        }
+    }, 250);
 </script>
 </body>
 </html>

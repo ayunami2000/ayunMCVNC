@@ -95,7 +95,7 @@ class VideoCaptureUDPServer extends VideoCaptureBase {
 
 				int soi = 0; // start of image / SOI
 				int eoi = 0; // end of image / EOI
-				while (this.isAlive() && running && !displayInfo.paused) {
+				while (this.isAlive() && this.running && !displayInfo.paused) {
 					socket.receive(packet);
 
 					byte[] data = packet.getData();
