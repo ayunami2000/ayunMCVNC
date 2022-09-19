@@ -94,7 +94,7 @@ public class DisplayInfo {
 					uniquePort = (18000 + mapIds.get(0));
 			}
 
-			System.out.println(uniquePort);
+			System.out.println("Audio UDP port for display " + name + ": " + uniquePort);
 
 			try {
 				audioSocket = new DatagramSocket();
