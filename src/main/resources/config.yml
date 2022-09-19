@@ -19,7 +19,7 @@ audio:
     # use ffmpeg
     enabled: true
     # full ffmpeg command-line (leave blank for default)
-    # e.g. [ "ffmpeg", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-f", "s16le", "-acodec", "pcm_s16le", "-ac", "2", "-ar", "48000", "-i", "pipe:", "-f", "mp3", "-" ]
+    # e.g. [ "ffmpeg", "-re", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-thread_queue_size", "4096", "-f", "s16le", "-acodec", "pcm_s16le", "-ac", "2", "-ar", "48000", "-i", "pipe:", "-f", "mp3", "-" ]
     params: []
   # input format (always PCM)
   format:
