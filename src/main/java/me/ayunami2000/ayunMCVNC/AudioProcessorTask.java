@@ -26,9 +26,8 @@ class AudioProcessorTask extends BukkitRunnable {
 		}
 	}
 
-	public synchronized void cancel() throws IllegalStateException {
-		if (ws != null) this.ws.stop();
-		super.cancel();
+	public void cleanup() {
+		if (this.ws != null) this.ws.stop();
 	}
 
 	@Override

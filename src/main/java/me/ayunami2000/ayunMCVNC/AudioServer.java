@@ -2,6 +2,7 @@ package me.ayunami2000.ayunMCVNC;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -17,6 +18,7 @@ public class AudioServer {
 
 	private final EventLoopGroup bossGroup;
 	private final EventLoopGroup workerGroup;
+	private ChannelFuture channelFuture;
 
 	public AudioServer(int port) {
 		bossGroup = new NioEventLoopGroup(1);
@@ -29,13 +31,20 @@ public class AudioServer {
 					.channel(NioServerSocketChannel.class)
 					.childHandler(new HTTPInitializer());
 
-			b.bind(port).sync();
+			channelFuture = b.bind(port).sync();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
 
 	public void stop() {
+		if (channelFuture != null) {
+			try {
+				channelFuture.channel().close().sync();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 		bossGroup.shutdownGracefully();
 		workerGroup.shutdownGracefully();
 	}

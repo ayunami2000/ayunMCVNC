@@ -34,6 +34,8 @@ public class Main extends JavaPlugin implements Listener {
 
 	public static List<BukkitTask> tasks = new ArrayList<>();
 
+	private AudioProcessorTask audioProcessorTask;
+
 	public boolean audioUdpEnabled = false;
 	public int audioUdpPortMode = 0;
 
@@ -91,7 +93,7 @@ public class Main extends JavaPlugin implements Listener {
 		tasks.add(framePacketSender.runTaskTimerAsynchronously(this, 0, 1));
 
 		if (httpEnabled || audioUdpEnabled) {
-			AudioProcessorTask audioProcessorTask = new AudioProcessorTask();
+			audioProcessorTask = new AudioProcessorTask();
 			tasks.add(audioProcessorTask.runTaskTimerAsynchronously(this, 0, 5)); // 4 times per second
 		}
 
@@ -114,6 +116,9 @@ public class Main extends JavaPlugin implements Listener {
 		Set<DisplayInfo> displays = new HashSet<>(DisplayInfo.displays.values());
 		for (DisplayInfo display : displays) {
 			display.delete();
+		}
+		if (audioProcessorTask != null) {
+			audioProcessorTask.cleanup();
 		}
 		for (BukkitTask task : tasks) task.cancel();
 		tasks.clear();
