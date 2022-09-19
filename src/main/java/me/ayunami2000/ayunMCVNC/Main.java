@@ -100,7 +100,7 @@ public class Main extends JavaPlugin implements Listener {
 			public void run() {
 				Set<Player> players = new HashSet<>(Bukkit.getOnlinePlayers());
 				for (Player player : players) {
-					if (!player.isOp()) continue;
+					if (!player.hasPermission("ayunmcvnc.interact")) continue;
 					Block tgtbl = player.getTargetBlock(null, 5);
 					if (tgtbl != null) ClickOnScreen.clickedOnBlock(tgtbl, player, false);
 				}
@@ -150,14 +150,14 @@ public class Main extends JavaPlugin implements Listener {
 	public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
 		if (!command.getName().equals("mcvnc")) return false;
 		boolean console = sender instanceof ConsoleCommandSender;
-		boolean op = sender.isOp();
-		if (!op && !console) {
-			sender.sendMessage("Error: You do not have permission to use this command!");
-			return true;
-		}
+		boolean canManage = console || sender.hasPermission("ayunmcvnc.manage");
+		boolean canInteract = canManage || sender.hasPermission("ayunmcvnc.interact");
 		String firstArg = args.length == 0 ? "" : args[0];
 		switch (firstArg) {
 			case "create":
+				if (!canManage) {
+					sender.sendMessage("Error: You do not have permission to create displays!");
+				}
 				// name
 				// width
 				// height
@@ -224,6 +224,9 @@ public class Main extends JavaPlugin implements Listener {
 				sender.sendMessage("Display successfully created! Name: " + displayInfo.name);
 				return true;
 			case "delete":
+				if (!canManage) {
+					sender.sendMessage("Error: You do not have permission to delete displays!");
+				}
 				if (args.length < 2) {
 					sender.sendMessage("Usage: /mcvnc delete <name>");
 					return true;
@@ -239,6 +242,9 @@ public class Main extends JavaPlugin implements Listener {
 				sender.sendMessage("Display successfully deleted!");
 				return true;
 			case "toggle":
+				if (!canManage) {
+					sender.sendMessage("Error: You do not have permission to toggle displays!");
+				}
 				if (args.length < 2) {
 					sender.sendMessage("Usage: /mcvnc toggle <name>");
 					return true;
@@ -253,6 +259,9 @@ public class Main extends JavaPlugin implements Listener {
 				sender.sendMessage("Display toggled!");
 				return true;
 			case "move":
+				if (!canManage) {
+					sender.sendMessage("Error: You do not have permission to move displays!");
+				}
 				if (args.length < 2) {
 					sender.sendMessage("Usage: /mcvnc move <name>");
 					return true;
@@ -274,6 +283,9 @@ public class Main extends JavaPlugin implements Listener {
 				sender.sendMessage("Display moved!");
 				return true;
 			case "list":
+				if (!canInteract && !canManage) {
+					sender.sendMessage("Error: You do not have permission to list displays!");
+				}
 				sender.sendMessage("Displays:");
 				Set<String> displayIds = DisplayInfo.displays.keySet();
 				if (displayIds.size() == 0) {
@@ -286,6 +298,9 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				return true;
 			case "cb":
+				if (!canManage) {
+					sender.sendMessage("Error: You do not have permission to run this command!");
+				}
 				if (args.length > 2) {
 					DisplayInfo displayInfooo = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
 					if (displayInfooo == null) {
@@ -322,6 +337,9 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				return true;
 			case "type":
+				if (!canInteract) {
+					sender.sendMessage("Error: You do not have permission to type!");
+				}
 				if (args.length == 1 || args.length == 2) {
 					sender.sendMessage("Usage: /mcvnc type <name> <text>");
 				} else {
@@ -338,6 +356,9 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				return true;
 			case "key":
+				if (!canInteract) {
+					sender.sendMessage("Error: You do not have permission to press keys!");
+				}
 				if (args.length == 1 || args.length == 2) {
 					sender.sendMessage("Usage: /mcvnc key <name> <keyname>\n§lWarning: Case sensitive!");
 				} else {
@@ -357,6 +378,9 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				return true;
 			case "keystate":
+				if (!canInteract) {
+					sender.sendMessage("Error: You do not have permission to change key states!");
+				}
 				if (args.length == 1 || args.length == 2 || args.length == 3) {
 					sender.sendMessage("Usage: /mcvnc keystate <name> <down|up> <keyname>\n§lWarning: Case sensitive!");
 				} else {
@@ -377,6 +401,9 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				return true;
 			case "press":
+				if (!canInteract) {
+					sender.sendMessage("Error: You do not have permission to hold keys!");
+				}
 				if (args.length == 1 || args.length == 2 || args.length == 3) {
 					sender.sendMessage("Usage: /mcvnc press <name> <duration> <keyname>\n§lWarning: Case sensitive!");
 				} else {

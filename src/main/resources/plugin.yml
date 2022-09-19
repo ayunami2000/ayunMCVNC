@@ -6,3 +6,10 @@ commands:
   mcvnc:
     description: Manage ayunMCVNC
     usage: /<command>
+permissions:
+  ayunmcvnc.interact:
+    description: Interact with displays generated with ayunMCVNC
+  ayunmcvnc.manage:
+    description: Manage ayunMCVNC
+  ayunmcvnc.view:
+    description: View/listen to displays generated with ayunMCVNC

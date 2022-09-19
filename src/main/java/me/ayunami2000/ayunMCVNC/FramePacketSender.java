@@ -19,6 +19,16 @@ class FramePacketSender extends BukkitRunnable {
 	public FramePacketSender() {
 	}
 
+	private class PacketItem {
+		public DisplayInfo display;
+		public PacketPlayOutMap packet;
+
+		public PacketItem(DisplayInfo display, PacketPlayOutMap packet) {
+			this.display = display;
+			this.packet = packet;
+		}
+	}
+
 	@Override
 	public void run() {
 		for (int batch = 0; batch < 5; batch++) {
@@ -28,7 +38,7 @@ class FramePacketSender extends BukkitRunnable {
 			}
 			byte[][] buffers = frameItem.frameBuffer;
 			// todo: only send if within certain distance...?
-			List<PacketPlayOutMap> packets = new ArrayList<>(frameItem.display.mapIds.size());
+			List<PacketItem> packets = new ArrayList<>(frameItem.display.mapIds.size());
 			int numMaps = frameItem.display.mapIds.size();
 			for (int i = 0; i < numMaps; i++) {
 				byte[] buffer = buffers[i];
@@ -37,9 +47,9 @@ class FramePacketSender extends BukkitRunnable {
 					PacketPlayOutMap packet = getPacket(mapId, buffer);
 					boolean modified = DisplayInfo.screenPartModified.contains(mapId);
 					if (!modified) {
-						packets.add(0, packet);
+						packets.add(0, new PacketItem(frameItem.display, packet));
 					} else {
-						packets.add(packet);
+						packets.add(new PacketItem(frameItem.display, packet));
 					}
 					DisplayInfo.screenPartModified.add(mapId);
 				} else {
@@ -63,11 +73,13 @@ class FramePacketSender extends BukkitRunnable {
 		}
 	}
 
-	private void sendToPlayer(Player player, List<PacketPlayOutMap> packets) {
+	private void sendToPlayer(Player player, List<PacketItem> packets) {
 		CraftPlayer craftPlayer = (CraftPlayer) player;
-		for (PacketPlayOutMap packet : packets) {
-			if (packet != null) {
-				craftPlayer.getHandle().playerConnection.networkManager.sendPacket(packet);
+		for (PacketItem packet : packets) {
+			if (packet != null && packet.packet != null) {
+				if (packet.display == DisplayInfo.getNearest(player, 4096)) {
+					craftPlayer.getHandle().playerConnection.networkManager.sendPacket(packet.packet);
+				}
 			}
 		}
 	}
