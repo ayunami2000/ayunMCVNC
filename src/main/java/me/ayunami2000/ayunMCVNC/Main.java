@@ -59,6 +59,19 @@ public class Main extends JavaPlugin implements Listener {
 		audioSampleFormats.add("s32le");
 	}
 
+	public List<String> slotTexts = new ArrayList<>();
+	{
+		slotTexts.add("Left click");
+		slotTexts.add("Middle click");
+		slotTexts.add("Right click");
+		slotTexts.add("Toggle left click");
+		slotTexts.add("Toggle middle click");
+		slotTexts.add("Toggle right click");
+		slotTexts.add("No action");
+		slotTexts.add("No action");
+		slotTexts.add("No action");
+	}
+
 	@Override
 	public void onEnable() {
 		plugin = this;

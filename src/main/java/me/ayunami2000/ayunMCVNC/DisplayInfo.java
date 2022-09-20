@@ -8,7 +8,6 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class DisplayInfo {
@@ -181,14 +181,18 @@ public class DisplayInfo {
 		this.delete(false);
 	}
 
+	public static DisplayInfo getNearest(CommandSender sender, int hardLimit) {
+		List<DisplayInfo> nearestDisplays = getSorted(sender, hardLimit);
+		if (nearestDisplays.isEmpty()) return null;
+		return nearestDisplays.get(0);
+	}
+
 	public static DisplayInfo getNearest(CommandSender sender) {
 		return getNearest(sender, -1);
 	}
 
-	public static DisplayInfo getNearest(CommandSender sender, int hardLimit) {
+	public static List<DisplayInfo> getSorted(CommandSender sender, int hardLimit) {
 		Collection<DisplayInfo> displayValues = displays.values();
-		double minDist = Double.MAX_VALUE;
-		DisplayInfo res = null;
 		BlockCommandSender cmdBlockSender = null;
 		Player player = null;
 		if (sender instanceof BlockCommandSender) {
@@ -196,16 +200,14 @@ public class DisplayInfo {
 		} else if (sender instanceof Player) {
 			player = (Player) sender;
 		} else {
-			return null;
+			return new ArrayList<>();
 		}
+		TreeMap<Double, DisplayInfo> displaySorter = new TreeMap<>();
 		for (DisplayInfo display : displayValues) {
 			double dist = (player != null ? player.getLocation() : cmdBlockSender.getBlock().getLocation()).distanceSquared(display.location.clone().add(display.locEnd).multiply(0.5));
 			if (hardLimit != -1 && dist > hardLimit) continue;
-			if (minDist > dist) {
-				minDist = dist;
-				res = display;
-			}
+			displaySorter.put(dist, display);
 		}
-		return res;
+		return new ArrayList<>(displaySorter.values());
 	}
 }

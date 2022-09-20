@@ -1,9 +1,12 @@
 package me.ayunami2000.ayunMCVNC;
 
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
 
 import java.util.Collection;
@@ -11,7 +14,7 @@ import java.util.Collection;
 public class ClickOnScreen {
 	static BlockFace[] numberToBlockFace = new BlockFace[]{BlockFace.SOUTH, BlockFace.WEST, BlockFace.NORTH, BlockFace.EAST};
 
-	private static boolean numBetween(double num, double val1, double val2) {
+	public static boolean numBetween(double num, double val1, double val2) {
 		double maxVal = Math.max(val1, val2);
 		double minVal = Math.min(val1, val2);
 		return num >= minVal && num <= maxVal;
@@ -67,20 +70,20 @@ public class ClickOnScreen {
 						int slot = player.getInventory().getHeldItemSlot();
 						if (!doClick) {
 							display.videoCapture.clickMouse(x, y, 0, false);
-						} else if (slot == 6) {
-							// MakiDesktop.alwaysMoveMouse = !MakiDesktop.alwaysMoveMouse;
-							// player.sendMessage("No" + (MakiDesktop.alwaysMoveMouse ? "w" : " longer") + " controlling mouse.");
-						} else if (slot == 7) {
-							display.videoCapture.clickMouse(x, y, 0, false);
-						} else if (slot == 8) {
-							// do nothing
-						} else {
+						} else if (slot < 6) {
 							display.videoCapture.clickMouse(x, y, (slot % 3) + 1, slot == 3 || slot == 4 || slot == 5);
 						}
+						if (!player.hasMetadata("lookingAtScreen")) {
+							player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("ayunMCVNC: Current tool: " + Main.plugin.slotTexts.get(slot)));
+						}
+						player.setMetadata("lookingAtScreen", new FixedMetadataValue(Main.plugin, true));
 						return true;
 					}
 				}
 			}
+		}
+		if (player.hasMetadata("lookingAtScreen")) {
+			player.removeMetadata("lookingAtScreen", Main.plugin);
 		}
 		return false;
 	}
