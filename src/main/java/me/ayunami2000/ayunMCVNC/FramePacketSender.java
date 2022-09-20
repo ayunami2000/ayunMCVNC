@@ -31,13 +31,12 @@ class FramePacketSender extends BukkitRunnable {
 
 	@Override
 	public void run() {
-		for (int batch = 0; batch < 5; batch++) {
+		for (int batch = 0; !isCancelled() && batch < 5; batch++) {
 			FrameItem frameItem = frameBuffers.poll();
 			if (frameItem == null) {
 				continue;
 			}
 			byte[][] buffers = frameItem.frameBuffer;
-			// todo: only send if within certain distance...?
 			List<PacketItem> packets = new ArrayList<>(frameItem.display.mapIds.size());
 			int numMaps = frameItem.display.mapIds.size();
 			for (int i = 0; i < numMaps; i++) {
