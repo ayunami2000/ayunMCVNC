@@ -187,7 +187,7 @@ public class Main extends JavaPlugin implements Listener {
 				// ip:port
 				// paused (optional)
 				if (args.length < 9) {
-					sender.sendMessage("Usage: /mcvnc create <name> <width (e.g. 5)> <height (e.g. 4)> <dither (e.g. true)> <mouse> <vnc> <audio> <ip:port|url> [paused]");
+					sender.sendMessage("Usage: /mcvnc create <name> <width (e.g. 5)> <height (e.g. 4)> <dither (e.g. true)> <mouse> <vnc> <audio> <ip:port|url|port>[;audioport][;vnc_uname][;vnc_passwd] [paused]");
 					return true;
 				}
 				if (!(sender instanceof Player)) {

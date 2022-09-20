@@ -23,7 +23,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -71,8 +70,8 @@ class VideoCaptureBase extends Thread {
 		}
 	}
 
-	public String getDestPiece(boolean audio) {
-		return (displayInfo.audio && displayInfo.dest.contains(";")) ? (audio ? displayInfo.dest.substring(displayInfo.dest.lastIndexOf(';') + 1) : displayInfo.dest.substring(0, displayInfo.dest.lastIndexOf(';'))) : displayInfo.dest;
+	public String[] getDestPieces() {
+		return displayInfo.dest.split(";", 3);
 	}
 }
 
@@ -82,7 +81,7 @@ class VideoCaptureUDPServer extends VideoCaptureBase {
 	@Override
 	public void run() {
 		while (this.isAlive() && this.running) {
-			int currDest = Integer.parseInt(getDestPiece(false));
+			int currDest = Integer.parseInt(getDestPieces()[0]);
 			try {
 				byte[] buffer = new byte[1024 * 1024]; // 1 mb
 				socket = new DatagramSocket(null);
@@ -149,7 +148,7 @@ class VideoCaptureUDPServer extends VideoCaptureBase {
 						}
 					}
 
-					if (currDest != Integer.parseInt(getDestPiece(false))) {
+					if (currDest != Integer.parseInt(getDestPieces()[0])) {
 						if (socket != null) {
 							socket.close();
 						}
@@ -164,7 +163,7 @@ class VideoCaptureUDPServer extends VideoCaptureBase {
 				socket.close();
 			}
 			if (!this.running) break;
-			if (displayInfo.paused || currDest == Integer.parseInt(getDestPiece(false))) {
+			if (displayInfo.paused || currDest == Integer.parseInt(getDestPieces()[0])) {
 				do {
 					try {
 						int sleepTime = displayInfo.paused ? 1 : 10;
@@ -191,7 +190,7 @@ class VideoCaptureUDPServer extends VideoCaptureBase {
 class VideoCaptureMjpeg extends VideoCaptureBase {
 	public void run() {
 		while (this.isAlive() && this.running) {
-			String currUrl = getDestPiece(false);
+			String currUrl = getDestPieces()[0];
 			try {
 				MjpegInputStream in = new MjpegInputStream(new URL(currUrl).openStream());
 
@@ -200,7 +199,7 @@ class VideoCaptureMjpeg extends VideoCaptureBase {
 				try {
 					while (this.running && !displayInfo.paused && (frame = in.readMjpegFrame()) != null) {
 						onFrame(toBufferedImage(frame.getImage()));
-						if (!currUrl.equals(getDestPiece(false))) in.close();
+						if (!currUrl.equals(getDestPieces()[0])) in.close();
 					}
 				} catch (EOFException e) {
 					e.printStackTrace();
@@ -261,9 +260,6 @@ class VideoCaptureVnc extends VideoCaptureBase {
 		config.setAudioChannelCountSupplier(() -> Main.plugin.audioChannelNum);
 		config.setAudioFrequencySupplier(() -> Main.plugin.audioFrequency);
 
-		// config.setUsernameSupplier(() -> MakiDesktop.getUserPass()[0]);
-		// config.setPasswordSupplier(() -> MakiDesktop.getUserPass()[1]);
-
 		config.setScreenUpdateListener(image -> {
 			if (displayInfo.paused || rendering > 5) return; // don't get too behind
 			rendering++;
@@ -298,7 +294,7 @@ class VideoCaptureVnc extends VideoCaptureBase {
 
 	public void run() {
 		while (this.isAlive() && this.running) {
-			Matcher m = ipPortPattern.matcher(getDestPiece(false));
+			Matcher m = ipPortPattern.matcher(getDestPieces()[0]);
 			if (!m.find()) {
 				System.out.println("Error: Expected IP:PORT");
 				displayInfo.paused = true;
@@ -306,6 +302,13 @@ class VideoCaptureVnc extends VideoCaptureBase {
 				String ip = m.group(1),
 						port = m.group(2);
 				client.stop();
+				String[] userPass = getDestPieces();
+				if (userPass.length == 3) {
+					config.setUsernameSupplier(() -> userPass[1]);
+					config.setPasswordSupplier(() -> userPass[2]);
+				} else if (userPass.length == 2) {
+					config.setPasswordSupplier(() -> userPass[1]);
+				}
 				config.setEnableQemuAudioEncoding(displayInfo.audio);
 				if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio) {
 					config.setQemuAudioListener(bytes -> {
