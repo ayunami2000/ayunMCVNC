@@ -40,7 +40,7 @@ public class ClickOnScreen {
 					BlockFace blockFace = getBlockFace(player, 5);
 					if (blockFace == numberToBlockFace[(int) (((display.location.getYaw() / 90) + 2) % 4)]) {
 						//correct block face
-						Vector exactLoc = IntersectionUtils.getIntersection(player.getEyeLocation(), block, blockFace, 0);
+						Vector exactLoc = IntersectionUtils.getIntersection(player.getEyeLocation(), block, blockFace, 0.0625);
 						double y = 1.0 - (exactLoc.getY() - display.locEnd.getY()) / ((double) (display.mapIds.size() / display.width));
 						double x = 0;
 						if (dYaw == 0) {
