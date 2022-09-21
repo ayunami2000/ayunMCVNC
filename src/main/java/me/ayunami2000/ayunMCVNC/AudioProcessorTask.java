@@ -74,8 +74,8 @@ class AudioProcessorTask extends BukkitRunnable {
 							Location loc = player.getLocation();
 							float yaw = loc.getYaw();
 							float pitch = loc.getPitch();
-							Vector pos = new Vector(loc.getX() - myPos.getX(), loc.getY() - myPos.getY(), loc.getZ() - myPos.getZ());
-							pos = Main.rotateVectorCC(pos, new Vector(0, 1, 0), (float) (yaw * Math.PI / 180.0));
+							Vector pos = new Vector(myPos.getX() - loc.getX(), myPos.getY() - loc.getY(), myPos.getZ() - loc.getZ());
+							pos = Main.rotateVectorCC(pos, new Vector(0, 1, 0), (float) ((yaw + 180) * Math.PI / 180.0));
 							pos = Main.rotateVectorCC(pos, new Vector(1, 0, 0), (float) (pitch * Math.PI / 180.0));
 							//pos = new Vec3d(pos.x * Math.cos(yaw) + pos.z * Math.sin(yaw), pos.y - (pitch / 90), pos.z * Math.cos(yaw) - pos.x * Math.sin(yaw));
 							if (webSocket.isOpen()) {
