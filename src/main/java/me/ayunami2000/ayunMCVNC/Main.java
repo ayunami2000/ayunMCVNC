@@ -204,7 +204,7 @@ public class Main extends JavaPlugin implements Listener {
 					return true;
 				}
 				Location loc = ((Player) sender).getTargetBlock(null, 5).getLocation();
-				int num = Arrays.asList(ClickOnScreen.numberToBlockFace).indexOf(ClickOnScreen.getBlockFace((Player) sender, 5));
+				int num = Arrays.asList(ClickOnScreen.numberToBlockFace).indexOf(ClickOnScreen.getBlockFace((Player) sender, 5).getOppositeFace());
 				if (num == -1) {
 					sender.sendMessage("Error: You must be looking at the top left corner of the screen!");
 					return true;
