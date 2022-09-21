@@ -24,7 +24,7 @@ public class AudioCapture extends Thread {
 
 	public AudioCapture(VideoCaptureBase videoCapture) {
 		String[] destPieces = videoCapture.getDestPieces();
-		if (!videoCapture.displayInfo.audio || destPieces.length < 2 || destPieces[1].isEmpty()) {
+		if (videoCapture.displayInfo.audio < 0 || destPieces.length < 2 || destPieces[1].isEmpty()) {
 			this.running = false;
 			return;
 		}

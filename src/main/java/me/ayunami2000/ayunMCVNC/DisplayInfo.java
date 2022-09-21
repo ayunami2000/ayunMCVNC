@@ -36,7 +36,7 @@ public class DisplayInfo {
 	public final List<Integer> mapIds;
 	public final String name;
 	public boolean mouse;
-	public boolean audio;
+	public int audio;
 	public Location location; // top left corner
 	public Location locEnd; // bottom right corner
 	public int width;
@@ -54,7 +54,7 @@ public class DisplayInfo {
 	public VideoCapture videoCapture;
 	private final BukkitTask task1;
 
-	public DisplayInfo(String name, List<Integer> mapIds, boolean mouse, boolean audio, Location location, int width, String dest, boolean paused) {
+	public DisplayInfo(String name, List<Integer> mapIds, boolean mouse, int audio, Location location, int width, String dest, boolean paused) {
 		this.name = name;
 		this.mapIds = mapIds;
 		this.mouse = mouse;
@@ -138,6 +138,34 @@ public class DisplayInfo {
 		}
 	}
 
+	public static class Shell {
+
+		public String name;
+		public List<Integer> mapIds;
+		public boolean mouse;
+		public int audio;
+		public Location location;
+		public int width;
+		public String dest;
+		public boolean paused;
+
+		public Shell(DisplayInfo source, boolean recycle) {
+			this.name = source.name;
+			this.mapIds = source.mapIds;
+			this.mouse = source.mouse;
+			this.audio = source.audio;
+			this.location = source.location;
+			this.width = source.width;
+			this.dest = source.dest;
+			this.paused = source.paused;
+			source.delete(recycle);
+		}
+
+		public DisplayInfo create() {
+			return new DisplayInfo(this.name, this.mapIds, this.mouse, this.audio, this.location, this.width, this.dest, this.paused);
+		}
+	}
+
 	public void setEndLoc() {
 		float yaw = this.location.getYaw();
 
@@ -200,7 +228,10 @@ public class DisplayInfo {
 		}
 		TreeMap<Double, DisplayInfo> displaySorter = new TreeMap<>();
 		for (DisplayInfo display : displayValues) {
-			double dist = (player != null ? player.getLocation() : cmdBlockSender.getBlock().getLocation()).distanceSquared(display.location.clone().add(display.locEnd).multiply(0.5));
+			Location sourceLoc = (player != null ? player.getLocation() : cmdBlockSender.getBlock().getLocation());
+			if (sourceLoc.getWorld() != display.location.getWorld()) continue;
+			Location targetLoc = display.location.clone().add(display.locEnd).multiply(0.5);
+			double dist = sourceLoc.distanceSquared(targetLoc);
 			if (hardLimit != -1 && dist > hardLimit) continue;
 			displaySorter.put(dist, display);
 		}

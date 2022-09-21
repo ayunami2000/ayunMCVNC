@@ -72,8 +72,8 @@ class VideoCaptureBase extends Thread {
 
 	public String[] getDestPieces() {
 		if (this instanceof VideoCaptureVnc) {
-			return displayInfo.dest.split(";", displayInfo.audio ? 4 : 3);
-		} else if (!displayInfo.audio) {
+			return displayInfo.dest.split(";", displayInfo.audio >= 0 ? 4 : 3);
+		} else if (displayInfo.audio < 0) {
 			return new String[] {displayInfo.dest};
 		} else if (this instanceof VideoCaptureMjpeg) {
 			return displayInfo.dest.split(";(?=(?:[^;]*;){0,2}[^;]*$)");
@@ -311,15 +311,15 @@ class VideoCaptureVnc extends VideoCaptureBase {
 						port = m.group(2);
 				client.stop();
 				String[] userPass = getDestPieces();
-				int audioInc = displayInfo.audio ? 1 : 0;
+				int audioInc = displayInfo.audio >= 0 ? 1 : 0;
 				if (userPass.length > 2 + audioInc) {
 					config.setUsernameSupplier(() -> userPass[1 + audioInc]);
 					config.setPasswordSupplier(() -> userPass[2 + audioInc]);
 				} else if (userPass.length > 1 + audioInc) {
 					config.setPasswordSupplier(() -> userPass[1 + audioInc]);
 				}
-				config.setEnableQemuAudioEncoding(displayInfo.audio);
-				if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio && (userPass.length < 2 || userPass[1].isEmpty())) {
+				config.setEnableQemuAudioEncoding(displayInfo.audio >= 0);
+				if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio >= 0 && (userPass.length < 2 || userPass[1].isEmpty())) {
 					config.setQemuAudioListener(bytes -> {
 						if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
 							if (displayInfo.audioOs != null/* && !Arrays.equals(bytes, new byte[bytes.length])*/) {
@@ -1377,7 +1377,7 @@ public class VideoCapture extends Thread {
 
 		String[] destPieces = videoCapture.getDestPieces();
 
-		if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio && destPieces.length > 1 && !destPieces[1].isEmpty()) videoCapture.audioCapture = new AudioCapture(videoCapture) {
+		if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio >= 0 && destPieces.length > 1 && !destPieces[1].isEmpty()) videoCapture.audioCapture = new AudioCapture(videoCapture) {
 			@Override
 			public void onFrame(byte[] frame) {
 				if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
@@ -1397,7 +1397,7 @@ public class VideoCapture extends Thread {
 
 		videoCapture.start();
 
-		if (displayInfo.audio && destPieces.length > 1 && !destPieces[1].isEmpty()) videoCapture.audioCapture.start();
+		if (displayInfo.audio >= 0 && destPieces.length > 1 && !destPieces[1].isEmpty()) videoCapture.audioCapture.start();
 
 	}
 

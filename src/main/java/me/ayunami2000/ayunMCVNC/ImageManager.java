@@ -29,7 +29,7 @@ public class ImageManager implements Listener {
 	}
 
 	public void init() {
-		Bukkit.getServer().getPluginManager().registerEvents(this, Main.plugin);
+		Bukkit.getPluginManager().registerEvents(this, Main.plugin);
 		loadImages();
 	}
 
@@ -46,7 +46,7 @@ public class ImageManager implements Listener {
 
 	public void saveImage(DisplayInfo displayInfo) {
 		if (getData().contains("displays")) {
-			String displayId = displayInfo.name.toString();
+			String displayId = displayInfo.name;
 			ConfigurationSection displays = getData().getConfigurationSection("displays");
 			if (!displays.contains(displayId)) {
 				displays.createSection(displayId);
@@ -96,8 +96,8 @@ public class ImageManager implements Listener {
 			for (String displayId : displayIds) {
 				ConfigurationSection displayProperties = displays.getConfigurationSection(displayId);
 				ConfigurationSection location = displayProperties.getConfigurationSection("location");
-				Location loc = new Location(Main.plugin.getServer().getWorld(location.getString("world")), location.getInt("x"), location.getInt("y"), location.getInt("z"), location.getInt("dir") * 90F, 0);
-				new DisplayInfo(displayId, displayProperties.getIntegerList("mapIds"), displayProperties.getBoolean("mouse"), displayProperties.getBoolean("audio"), loc, displayProperties.getInt("width"), displayProperties.getString("dest"), displayProperties.getBoolean("paused"));
+				Location loc = new Location(Bukkit.getWorld(location.getString("world")), location.getInt("x"), location.getInt("y"), location.getInt("z"), location.getInt("dir") * 90F, 0);
+				new DisplayInfo(displayId, displayProperties.getIntegerList("mapIds"), displayProperties.getBoolean("mouse"), displayProperties.getInt("audio", -1), loc, displayProperties.getInt("width"), displayProperties.getString("dest"), displayProperties.getBoolean("paused"));
 			}
 		}
 		if (getData().contains("unused")) {

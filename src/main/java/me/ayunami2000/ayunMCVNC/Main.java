@@ -98,7 +98,7 @@ public class Main extends JavaPlugin implements Listener {
 		ImageManager manager = ImageManager.getInstance();
 		manager.init();
 
-		PluginManager pm = getServer().getPluginManager();
+		PluginManager pm = Bukkit.getPluginManager();
 		pm.registerEvents(this, this);
 		pm.registerEvents(new ScreenClickEvent(), this);
 
@@ -187,7 +187,7 @@ public class Main extends JavaPlugin implements Listener {
 				// ip:port
 				// paused (optional)
 				if (args.length < 7) {
-					sender.sendMessage("Usage: /mcvnc create <name> <width (e.g. 5)> <height (e.g. 4)> <mouse> <audio> <vnc_ip:port|mjpeg_url|udp_port>[;audioport][;vnc_uname][;vnc_passwd] [paused]");
+					sender.sendMessage("Usage: /mcvnc create <name> <width (e.g. 5)> <height (e.g. 4)> <mouse (e.g. true)> <video_delay|disable_audio_with_negative_value> <vnc_ip:port|mjpeg_url|udp_port>[;audioport][;vnc_uname][;vnc_passwd] [paused]");
 					return true;
 				}
 				if (!(sender instanceof Player)) {
@@ -217,7 +217,7 @@ public class Main extends JavaPlugin implements Listener {
 				int height = Integer.parseInt(args[3]);
 
 				boolean mouse = Boolean.parseBoolean(args[4]);
-				boolean audio = Boolean.parseBoolean(args[5]);
+				int audio = Integer.parseInt(args[5]);
 
 				String dest = args[6];
 
@@ -227,7 +227,7 @@ public class Main extends JavaPlugin implements Listener {
 
 				for (int i = 0; i < width * height; i++) {
 					int potentialMapId = ImageManager.getInstance().reuse();
-					MapView mapView = potentialMapId == -1 ? getServer().createMap(loc.getWorld()) : getServer().getMap((short) potentialMapId);
+					MapView mapView = potentialMapId == -1 ? Bukkit.createMap(loc.getWorld()) : Bukkit.getMap((short) potentialMapId);
 					mapView.setScale(MapView.Scale.CLOSEST);
 					mapView.setUnlimitedTracking(true);
 					for (MapRenderer renderer : mapView.getRenderers()) {
@@ -278,6 +278,106 @@ public class Main extends JavaPlugin implements Listener {
 					displayInfoooo.paused = !displayInfoooo.paused;
 					ImageManager.getInstance().saveImage(displayInfoooo);
 					sender.sendMessage("Display toggled!");
+				}
+				return true;
+			case "dest":
+				if (!canManage) {
+					sender.sendMessage("Error: You do not have permission to change the destination of displays!");
+					return true;
+				}
+				if (args.length < 3) {
+					sender.sendMessage("Usage: /mcvnc dest <name> <vnc_ip:port|mjpeg_url|udp_port>[;audioport][;vnc_uname][;vnc_passwd]");
+					return true;
+				}
+				DisplayInfo displayInfooooq = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
+				if (displayInfooooq == null) {
+					sender.sendMessage("Error: Invalid display!");
+				} else {
+					DisplayInfo.Shell shell = new DisplayInfo.Shell(displayInfooooq, false);
+					shell.dest = args[2];
+					displayInfooooq = shell.create();
+					ImageManager.getInstance().saveImage(displayInfooooq);
+					sender.sendMessage("Display destination set!");
+				}
+				return true;
+			case "resize":
+				if (!canManage) {
+					sender.sendMessage("Error: You do not have permission to resize displays!");
+					return true;
+				}
+				if (args.length < 4) {
+					sender.sendMessage("Usage: /mcvnc resize <name> <width> <height>");
+					return true;
+				}
+				DisplayInfo displayInfoooor = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
+				if (displayInfoooor == null) {
+					sender.sendMessage("Error: Invalid display!");
+				} else {
+					int widthr = Integer.parseInt(args[2]);
+					int heightr = Integer.parseInt(args[3]);
+					DisplayInfo.Shell shell = new DisplayInfo.Shell(displayInfoooor, true);
+					shell.width = widthr;
+
+					List<Integer> mapIdsr = new ArrayList<>(widthr * heightr);
+
+					for (int i = 0; i < widthr * heightr; i++) {
+						int potentialMapId = ImageManager.getInstance().reuse();
+						MapView mapView = potentialMapId == -1 ? Bukkit.createMap(shell.location.getWorld()) : Bukkit.getMap((short) potentialMapId);
+						mapView.setScale(MapView.Scale.CLOSEST);
+						mapView.setUnlimitedTracking(true);
+						for (MapRenderer renderer : mapView.getRenderers()) {
+							mapView.removeRenderer(renderer);
+						}
+						ItemStack itemStack = new ItemStack(Material.MAP);
+						itemStack.setDurability(mapView.getId());
+						((Player) sender).getInventory().addItem(itemStack);
+
+						mapIdsr.add((int) mapView.getId());
+					}
+
+					shell.mapIds = mapIdsr;
+					displayInfoooor = shell.create();
+					ImageManager.getInstance().saveImage(displayInfoooor);
+					sender.sendMessage("Display resized!");
+				}
+				return true;
+			case "delay":
+				if (!canManage) {
+					sender.sendMessage("Error: You do not have permission to change the delay of displays!");
+					return true;
+				}
+				if (args.length < 3) {
+					sender.sendMessage("Usage: /mcvnc delay <name> <video_delay|disable_audio_with_negative_value>");
+					return true;
+				}
+				DisplayInfo displayInfooook = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
+				if (displayInfooook == null) {
+					sender.sendMessage("Error: Invalid display!");
+				} else {
+					int audiok = Integer.parseInt(args[2]);
+					DisplayInfo.Shell shell = new DisplayInfo.Shell(displayInfooook, false);
+					shell.audio = audiok;
+					displayInfooook = shell.create();
+					ImageManager.getInstance().saveImage(displayInfooook);
+					sender.sendMessage("Display video delay set!");
+				}
+				return true;
+			case "mouse":
+				if (!canManage) {
+					sender.sendMessage("Error: You do not have permission to toggle mouse on displays!");
+					return true;
+				}
+				if (args.length < 2) {
+					sender.sendMessage("Usage: /mcvnc mouse <name>");
+					return true;
+				}
+				DisplayInfo displayInfoooom = args[1].startsWith("@") ? DisplayInfo.getNearest(sender) : DisplayInfo.displays.getOrDefault(args[1], null);
+				if (displayInfoooom == null) {
+					sender.sendMessage("Error: Invalid display!");
+				} else {
+					displayInfoooom.mouse = !displayInfoooom.mouse;
+					ImageManager.getInstance().saveImage(displayInfoooom);
+					sender.sendMessage("Display mouse toggled!");
 				}
 				return true;
 			case "move":
@@ -460,7 +560,7 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				return true;
 			default:
-				sender.sendMessage("usage: /mcvnc [create|delete|toggle|move|list|cb|type|key|press|keystate] [...]");
+				sender.sendMessage("usage: /mcvnc [create|delete|toggle|move|resize|mouse|delay|dest|list|cb|type|key|press|keystate] [...]");
 		}
 		return true;
 	}

@@ -78,7 +78,18 @@ class FramePacketSender extends BukkitRunnable {
 		for (PacketItem packet : packets) {
 			if (packet != null && packet.packet != null) {
 				if (DisplayInfo.getSorted(player, 4096).contains(packet.display)) {
-					craftPlayer.getHandle().playerConnection.networkManager.sendPacket(packet.packet);
+					if (packet.display.audio > 0) {
+						new Thread(() -> {
+							try {
+								Thread.sleep(packet.display.audio);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+							craftPlayer.getHandle().playerConnection.networkManager.sendPacket(packet.packet);
+						}).start();
+					} else {
+						craftPlayer.getHandle().playerConnection.networkManager.sendPacket(packet.packet);
+					}
 				}
 			}
 		}

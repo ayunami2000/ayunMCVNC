@@ -35,7 +35,7 @@ class AudioProcessorTask extends BukkitRunnable {
 		new Thread(() -> {
 			Collection<DisplayInfo> displays = DisplayInfo.displays.values();
 			for (DisplayInfo display : displays) {
-				if (!display.audio) continue;
+				if (display.audio < 0) continue;
 				byte[] aud;
 				try {
 					int len = display.audioIs.available();
