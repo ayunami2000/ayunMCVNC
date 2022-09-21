@@ -23,11 +23,12 @@ public class AudioCapture extends Thread {
 	}
 
 	public AudioCapture(VideoCaptureBase videoCapture) {
-		if (!videoCapture.displayInfo.audio || videoCapture.getDestPieces().length == 1) {
+		String[] destPieces = videoCapture.getDestPieces();
+		if (!videoCapture.displayInfo.audio || destPieces.length < 2 || destPieces[1].isEmpty()) {
 			this.running = false;
 			return;
 		}
-		this.port = Integer.parseInt(videoCapture.getDestPieces()[1]);
+		this.port = Integer.parseInt(destPieces[1]);
 		this.displayInfo = videoCapture.displayInfo;
 	}
 

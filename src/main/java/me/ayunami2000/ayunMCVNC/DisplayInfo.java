@@ -35,9 +35,7 @@ public class DisplayInfo {
 
 	public final List<Integer> mapIds;
 	public final String name;
-	public boolean dither;
 	public boolean mouse;
-	public boolean vnc;
 	public boolean audio;
 	public Location location; // top left corner
 	public Location locEnd; // bottom right corner
@@ -56,12 +54,10 @@ public class DisplayInfo {
 	public VideoCapture videoCapture;
 	private final BukkitTask task1;
 
-	public DisplayInfo(String name, List<Integer> mapIds, boolean dither, boolean mouse, boolean vnc, boolean audio, Location location, int width, String dest, boolean paused) {
+	public DisplayInfo(String name, List<Integer> mapIds, boolean mouse, boolean audio, Location location, int width, String dest, boolean paused) {
 		this.name = name;
 		this.mapIds = mapIds;
-		this.dither = dither;
 		this.mouse = mouse;
-		this.vnc = vnc;
 		this.audio = audio;
 		this.location = location;
 		this.width = width;

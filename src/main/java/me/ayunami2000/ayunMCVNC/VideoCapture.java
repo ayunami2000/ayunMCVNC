@@ -71,7 +71,15 @@ class VideoCaptureBase extends Thread {
 	}
 
 	public String[] getDestPieces() {
-		return displayInfo.dest.split(";", 3);
+		if (this instanceof VideoCaptureVnc) {
+			return displayInfo.dest.split(";", displayInfo.audio ? 4 : 3);
+		} else if (!displayInfo.audio) {
+			return new String[] {displayInfo.dest};
+		} else if (this instanceof VideoCaptureMjpeg) {
+			return displayInfo.dest.split(";(?=(?:[^;]*;){0,2}[^;]*$)");
+		} else {
+			return displayInfo.dest.split(";", 2);
+		}
 	}
 }
 
@@ -303,14 +311,15 @@ class VideoCaptureVnc extends VideoCaptureBase {
 						port = m.group(2);
 				client.stop();
 				String[] userPass = getDestPieces();
-				if (userPass.length == 3) {
-					config.setUsernameSupplier(() -> userPass[1]);
-					config.setPasswordSupplier(() -> userPass[2]);
-				} else if (userPass.length == 2) {
-					config.setPasswordSupplier(() -> userPass[1]);
+				int audioInc = displayInfo.audio ? 1 : 0;
+				if (userPass.length > 2 + audioInc) {
+					config.setUsernameSupplier(() -> userPass[1 + audioInc]);
+					config.setPasswordSupplier(() -> userPass[2 + audioInc]);
+				} else if (userPass.length > 1 + audioInc) {
+					config.setPasswordSupplier(() -> userPass[1 + audioInc]);
 				}
 				config.setEnableQemuAudioEncoding(displayInfo.audio);
-				if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio) {
+				if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio && (userPass.length < 2 || userPass[1].isEmpty())) {
 					config.setQemuAudioListener(bytes -> {
 						if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
 							if (displayInfo.audioOs != null/* && !Arrays.equals(bytes, new byte[bytes.length])*/) {
@@ -1341,15 +1350,15 @@ public class VideoCapture extends Thread {
 		this.width = displayInfo.width;
 		this.height = (int) Math.ceil(displayInfo.mapIds.size() / (double) displayInfo.width);
 
-		if (displayInfo.vnc) {
-			videoCapture = new VideoCaptureVnc() {
+		if (displayInfo.dest.toLowerCase().startsWith("http:") || displayInfo.dest.toLowerCase().startsWith("https:")) {
+			videoCapture = new VideoCaptureMjpeg() {
 				@Override
 				public void onFrame(BufferedImage frame) {
 					displayInfo.currentFrame = frame;
 				}
 			};
-		} else if (displayInfo.dest.toLowerCase().startsWith("http:") || displayInfo.dest.toLowerCase().startsWith("https:")) {
-			videoCapture = new VideoCaptureMjpeg() {
+		} else if (displayInfo.dest.contains(":")) {
+			videoCapture = new VideoCaptureVnc() {
 				@Override
 				public void onFrame(BufferedImage frame) {
 					displayInfo.currentFrame = frame;
@@ -1366,7 +1375,9 @@ public class VideoCapture extends Thread {
 
 		videoCapture.displayInfo = displayInfo;
 
-		if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio && !displayInfo.vnc) videoCapture.audioCapture = new AudioCapture(videoCapture) {
+		String[] destPieces = videoCapture.getDestPieces();
+
+		if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio && destPieces.length > 1 && !destPieces[1].isEmpty()) videoCapture.audioCapture = new AudioCapture(videoCapture) {
 			@Override
 			public void onFrame(byte[] frame) {
 				if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
@@ -1386,7 +1397,7 @@ public class VideoCapture extends Thread {
 
 		videoCapture.start();
 
-		if (displayInfo.audio && !displayInfo.vnc) videoCapture.audioCapture.start();
+		if (displayInfo.audio && destPieces.length > 1 && !destPieces[1].isEmpty()) videoCapture.audioCapture.start();
 
 	}
 

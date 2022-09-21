@@ -186,8 +186,8 @@ public class Main extends JavaPlugin implements Listener {
 				// audio (todo: implement)
 				// ip:port
 				// paused (optional)
-				if (args.length < 9) {
-					sender.sendMessage("Usage: /mcvnc create <name> <width (e.g. 5)> <height (e.g. 4)> <dither (e.g. true)> <mouse> <vnc> <audio> <ip:port|url|port>[;audioport][;vnc_uname][;vnc_passwd] [paused]");
+				if (args.length < 7) {
+					sender.sendMessage("Usage: /mcvnc create <name> <width (e.g. 5)> <height (e.g. 4)> <mouse> <audio> <vnc_ip:port|mjpeg_url|udp_port>[;audioport][;vnc_uname][;vnc_passwd] [paused]");
 					return true;
 				}
 				if (!(sender instanceof Player)) {
@@ -213,14 +213,12 @@ public class Main extends JavaPlugin implements Listener {
 				int width = Integer.parseInt(args[2]);
 				int height = Integer.parseInt(args[3]);
 
-				boolean dither = Boolean.parseBoolean(args[4]);
-				boolean mouse = Boolean.parseBoolean(args[5]);
-				boolean vnc = Boolean.parseBoolean(args[6]);
-				boolean audio = Boolean.parseBoolean(args[7]);
+				boolean mouse = Boolean.parseBoolean(args[4]);
+				boolean audio = Boolean.parseBoolean(args[5]);
 
-				String dest = args[8];
+				String dest = args[6];
 
-				boolean paused = args.length < 10 ? false : Boolean.parseBoolean(args[9]);
+				boolean paused = args.length < 8 ? false : Boolean.parseBoolean(args[7]);
 
 				List<Integer> mapIds = new ArrayList<>(width * height);
 
@@ -238,7 +236,7 @@ public class Main extends JavaPlugin implements Listener {
 
 					mapIds.add((int) mapView.getId());
 				}
-				DisplayInfo displayInfo = new DisplayInfo(newName, mapIds, dither, mouse, vnc, audio, loc, width, dest, paused);
+				DisplayInfo displayInfo = new DisplayInfo(newName, mapIds, mouse, audio, loc, width, dest, paused);
 				ImageManager.getInstance().saveImage(displayInfo);
 				sender.sendMessage("Display successfully created! Name: " + displayInfo.name);
 				return true;

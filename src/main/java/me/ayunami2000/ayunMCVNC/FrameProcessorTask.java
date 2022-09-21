@@ -165,13 +165,7 @@ class FrameProcessorTask extends BukkitRunnable {
 				frame = changeType(frame);
 			}
 			frameData = ((DataBufferByte) frame.getRaster().getDataBuffer()).getData();
-			if (displayInfo.dither) {
-				ditherFrame();
-			} else {
-				for (int i = 0; i < frameData.length; i += 3) {
-					ditheredFrameData[i / 3] = (byte) ((frameData[i + 2] * 6 / 256) * 36 + (frameData[i + 1] * 6 / 256) * 6 + (frameData[i] * 6 / 256));
-				}
-			}
+			ditherFrame();
 
 			byte[][] buffers = new byte[mapSize][];
 
