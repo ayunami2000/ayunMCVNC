@@ -204,10 +204,13 @@ public class Main extends JavaPlugin implements Listener {
 					return true;
 				}
 				Location loc = ((Player) sender).getTargetBlock(null, 5).getLocation();
-				int yaw = (int) ((Player) sender).getLocation().getYaw();
-				while (yaw < 0) yaw += 360;
-				yaw = yaw % 360;
-				loc.setYaw(yaw);
+				int num = Arrays.asList(ClickOnScreen.numberToBlockFace).indexOf(ClickOnScreen.getBlockFace((Player) sender, 5));
+				if (num == -1) {
+					sender.sendMessage("Error: You must be looking at the top left corner of the screen!");
+					return true;
+				}
+				loc.setWorld(((Player) sender).getWorld());
+				loc.setYaw(num * 90);
 				loc.setPitch(0);
 
 				int width = Integer.parseInt(args[2]);
@@ -274,8 +277,8 @@ public class Main extends JavaPlugin implements Listener {
 				} else {
 					displayInfoooo.paused = !displayInfoooo.paused;
 					ImageManager.getInstance().saveImage(displayInfoooo);
+					sender.sendMessage("Display toggled!");
 				}
-				sender.sendMessage("Display toggled!");
 				return true;
 			case "move":
 				if (!canManage) {
@@ -291,10 +294,13 @@ public class Main extends JavaPlugin implements Listener {
 					sender.sendMessage("Error: Invalid display!");
 				} else {
 					Location locc = ((Player) sender).getTargetBlock(null, 5).getLocation();
-					int yaww = (int) ((Player) sender).getLocation().getYaw();
-					while (yaww < 0) yaww += 360;
-					yaww = yaww % 360;
-					locc.setYaw(yaww);
+					int numm = Arrays.asList(ClickOnScreen.numberToBlockFace).indexOf(ClickOnScreen.getBlockFace((Player) sender, 5).getOppositeFace());
+					if (numm == -1) {
+						sender.sendMessage("Error: You must be looking at the top left corner of the screen!");
+						return true;
+					}
+					locc.setWorld(((Player) sender).getWorld());
+					locc.setYaw(numm * 90);
 					locc.setPitch(0);
 					displayInfooooo.location = locc;
 					displayInfooooo.setEndLoc();

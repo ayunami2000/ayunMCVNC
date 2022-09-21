@@ -113,6 +113,7 @@ public class ScreenClickEvent implements Listener {
 						Player player = (Player) event.getDamager();
 						if (!player.hasPermission("ayunmcvnc.interact")) return;
 						ClickOnScreen.clickedOnBlock(block, player, true);
+						break;
 					}
 				}
 			}
@@ -140,6 +141,7 @@ public class ScreenClickEvent implements Listener {
 				event.setCancelled(true);
 				if (!player.hasPermission("ayunmcvnc.interact")) return;
 				ClickOnScreen.clickedOnBlock(block, player, true);
+				break;
 			}
 		}
 	}
@@ -147,9 +149,12 @@ public class ScreenClickEvent implements Listener {
 	@EventHandler
 	public void onHotbarChange(PlayerItemHeldEvent event) {
 		Player player = event.getPlayer();
+		if (!player.hasPermission("ayunmcvnc.interact")) return;
 		Collection<DisplayInfo> displays = DisplayInfo.displays.values();
 		BlockFace blockFace = ClickOnScreen.getBlockFace(player, 5).getOppositeFace();
 		for (DisplayInfo display : displays) {
+			if (display.paused) continue;
+			if (!display.mouse) continue;
 			float dYaw = 90F * (Math.round(display.location.getYaw() / 90F) % 4);
 			if (dYaw == 0) {
 				if (!blockFace.equals(BlockFace.SOUTH)) continue;
@@ -162,8 +167,8 @@ public class ScreenClickEvent implements Listener {
 			}
 			Block block = player.getTargetBlock(null, 5);
 			if (ClickOnScreen.numBetween(block.getX(), display.location.getX(), display.locEnd.getX()) && ClickOnScreen.numBetween(block.getY(), display.location.getY(), display.locEnd.getY()) && ClickOnScreen.numBetween(block.getZ	(), display.location.getZ(), display.locEnd.getZ())) {
-				if (!player.hasPermission("ayunmcvnc.interact")) return;
 				player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("ayunMCVNC: Current tool: " + Main.plugin.slotTexts.get(event.getNewSlot())));
+				break;
 			}
 		}
 	}

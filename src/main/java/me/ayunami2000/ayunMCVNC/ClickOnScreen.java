@@ -10,6 +10,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
 
 import java.util.Collection;
+import java.util.List;
 
 public class ClickOnScreen {
 	static BlockFace[] numberToBlockFace = new BlockFace[]{BlockFace.SOUTH, BlockFace.WEST, BlockFace.NORTH, BlockFace.EAST};
@@ -21,7 +22,8 @@ public class ClickOnScreen {
 	}
 
 	public static BlockFace getBlockFace(Player player, int maxDistance) {
-		return player.getLastTwoTargetBlocks(null, maxDistance).get(1).getFace(player.getLastTwoTargetBlocks(null, maxDistance).get(0));
+		List<Block> targetBlocks = player.getLastTwoTargetBlocks(null, maxDistance);
+		return targetBlocks.get(1).getFace(targetBlocks.get(0));
 	}
 
 	public static boolean clickedOnBlock(Block block, Player player, boolean doClick) {
