@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// ffmpeg -y -re -stream_loop -1 -thread_queue_size 4096 -f gdigrab -framerate 20 -i desktop -an -f rawvideo -c:v mjpeg -qscale:v 16 -r 20 -s 512x256 udp://127.0.0.1:1337
+
 // ffmpeg -y -re -stream_loop -1 -thread_queue_size 4096 -f dshow -i video="OBS Virtual Camera":audio="CABLE Output (VB-Audio Virtual Cable)" -f rawvideo -c:v mjpeg -qscale:v 16 -r 20 udp://127.0.0.1:1337 -f s16le -acodec pcm_s16le -ac 2 -ar 48000 udp://127.0.0.1:1338
 
 // ffmpeg -y -re -stream_loop -1 -thread_queue_size 4096 -i "" -vn -f s16le -acodec pcm_s16le -ac 2 -ar 48000 udp://127.0.0.1:1338
