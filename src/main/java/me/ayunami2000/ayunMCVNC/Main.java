@@ -259,8 +259,8 @@ public class Main extends JavaPlugin implements Listener {
 					displayInfoo.delete(true);
 					ImageManager.getInstance().removeImage(displayInfoo.name);
 					ImageManager.getInstance().saveData();
+					sender.sendMessage("Display successfully deleted!");
 				}
-				sender.sendMessage("Display successfully deleted!");
 				return true;
 			case "toggle":
 				if (!canManage) {
@@ -405,8 +405,8 @@ public class Main extends JavaPlugin implements Listener {
 					displayInfooooo.location = locc;
 					displayInfooooo.setEndLoc();
 					ImageManager.getInstance().saveImage(displayInfooooo);
+					sender.sendMessage("Display moved!");
 				}
-				sender.sendMessage("Display moved!");
 				return true;
 			case "list":
 				if (!canInteract) {

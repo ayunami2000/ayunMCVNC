@@ -47,7 +47,7 @@ class AudioProcessorTask extends BukkitRunnable {
 					continue;
 				}
 
-				if (System.currentTimeMillis() - display.audioLastWrite > 250) {
+				if (System.currentTimeMillis() - display.audioLastWrite > 2500) {
 					continue;
 				}
 

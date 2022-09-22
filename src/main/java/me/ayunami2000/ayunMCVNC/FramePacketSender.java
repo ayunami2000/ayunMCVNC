@@ -19,7 +19,7 @@ class FramePacketSender extends BukkitRunnable {
 	public FramePacketSender() {
 	}
 
-	private class PacketItem {
+	private static class PacketItem {
 		public DisplayInfo display;
 		public PacketPlayOutMap packet;
 
