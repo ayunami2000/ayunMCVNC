@@ -13,3 +13,4 @@ permissions:
     description: Manage ayunMCVNC
   ayunmcvnc.view:
     description: View/listen to displays generated with ayunMCVNC
+    default: true

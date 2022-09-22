@@ -21,8 +21,7 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
 
 			HttpHeaders headers = httpRequest.headers();
 
-			if (headers.get(HttpHeaderNames.CONNECTION).toLowerCase().contains("upgrade") &&
-					"WebSocket".equalsIgnoreCase(headers.get(HttpHeaderNames.UPGRADE))) {
+			if (headers.get(HttpHeaderNames.CONNECTION) != null && headers.get(HttpHeaderNames.CONNECTION).toLowerCase().contains("upgrade") && headers.get(HttpHeaderNames.UPGRADE) != null && "WebSocket".equalsIgnoreCase(headers.get(HttpHeaderNames.UPGRADE))) {
 
 				ctx.pipeline().replace(this, "websocketHandler", new WebSocketHandler());
 

@@ -29,14 +29,33 @@ import java.util.Map;
 public class ScreenClickEvent implements Listener {
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onPlayerInteract(PlayerInteractEntityEvent event) {
-		Player player = event.getPlayer();
-		if (!player.hasPermission("ayunmcvnc.interact")) return;
-		Block block = player.getTargetBlock(null, 5);
-		if (!(event.getRightClicked() instanceof ItemFrame)) return;
-		ItemStack itemStack = ((ItemFrame) event.getRightClicked()).getItem();
-		if (itemStack == null || itemStack.getType() != Material.MAP) return;
-		if (ClickOnScreen.clickedOnBlock(block, player, true)) {
-			event.setCancelled(true);
+		if (event.getRightClicked() instanceof ItemFrame) {
+			ItemFrame itemFrame = (ItemFrame) event.getRightClicked();
+			ItemStack itemStack = itemFrame.getItem();
+			if (itemStack == null || itemStack.getType() != Material.MAP) return;
+			Collection<DisplayInfo> displays = DisplayInfo.displays.values();
+			for (DisplayInfo display : displays) {
+				if (!display.mapIds.contains((int) itemStack.getDurability())) continue;
+				float dYaw = 90F * (Math.round(display.location.getYaw() / 90F) % 4);
+				BlockFace blockFace = itemFrame.getAttachedFace();
+				if (dYaw == 0) {
+					if (!blockFace.equals(BlockFace.SOUTH)) continue;
+				} else if (dYaw == 90) {
+					if (!blockFace.equals(BlockFace.WEST)) continue;
+				} else if (dYaw == 180) {
+					if (!blockFace.equals(BlockFace.NORTH)) continue;
+				} else if (dYaw == 270) {
+					if (!blockFace.equals(BlockFace.EAST)) continue;
+				}
+				Block block = itemFrame.getLocation().clone().add(blockFace.getModX(), blockFace.getModY(), blockFace.getModZ()).getBlock();
+				if (ClickOnScreen.numBetween(block.getX(), display.location.getX(), display.locEnd.getX()) && ClickOnScreen.numBetween(block.getY(), display.location.getY(), display.locEnd.getY()) && ClickOnScreen.numBetween(block.getZ	(), display.location.getZ(), display.locEnd.getZ())) {
+					event.setCancelled(true);
+					Player player = event.getPlayer();
+					if (!player.hasPermission("ayunmcvnc.interact")) return;
+					ClickOnScreen.clickedOnBlock(block, player, true);
+					break;
+				}
+			}
 		}
 	}
 
