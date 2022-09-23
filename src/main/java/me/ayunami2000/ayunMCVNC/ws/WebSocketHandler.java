@@ -22,7 +22,7 @@ public class WebSocketHandler extends ChannelInboundHandlerAdapter {
 				String message = ((TextWebSocketFrame) msg).text();
 				if (AudioServer.wsList.containsKey(conn)) {
 					if (message.equals("keep")) {
-						conn.writeAndFlush("alive");
+						conn.writeAndFlush(new TextWebSocketFrame("alive"));
 					} else {
 						conn.disconnect();
 					}
@@ -38,6 +38,7 @@ public class WebSocketHandler extends ChannelInboundHandlerAdapter {
 					}
 					if (message.equalsIgnoreCase(key)) {
 						AudioServer.wsList.put(conn, name);
+						conn.writeAndFlush(new TextWebSocketFrame("alive"));
 					} else {
 						conn.disconnect();
 					}
