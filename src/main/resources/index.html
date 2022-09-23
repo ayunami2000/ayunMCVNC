@@ -91,7 +91,9 @@
         };
         socket.onmessage = e => {
             if (typeof e.data == "string") {
-                if (e.data == "key") {
+                if (e.data == "alive") {
+                    setTimeout(() => socket.send("keep"), 5000);
+                } else if (e.data == "key") {
                     const key = prompt("Please enter the code received in-game to connect!");
                     if (!key) {
                         socket.close();

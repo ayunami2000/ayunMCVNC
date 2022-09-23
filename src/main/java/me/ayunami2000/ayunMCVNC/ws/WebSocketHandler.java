@@ -21,7 +21,11 @@ public class WebSocketHandler extends ChannelInboundHandlerAdapter {
 			if (msg instanceof TextWebSocketFrame) {
 				String message = ((TextWebSocketFrame) msg).text();
 				if (AudioServer.wsList.containsKey(conn)) {
-					conn.disconnect();
+					if (message.equals("keep")) {
+						conn.writeAndFlush("alive");
+					} else {
+						conn.disconnect();
+					}
 					return;
 				}
 				if (AudioServer.authList.containsKey(conn)) {

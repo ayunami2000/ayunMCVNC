@@ -23,6 +23,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -328,7 +329,7 @@ class VideoCaptureVnc extends VideoCaptureBase {
 				if ((Main.plugin.audioUdpEnabled || Main.plugin.httpEnabled) && displayInfo.audio >= 0 && (userPass.length < 2 || userPass[1].isEmpty())) {
 					config.setQemuAudioListener(bytes -> {
 						if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
-							if (displayInfo.audioOs != null/* && !Arrays.equals(bytes, new byte[bytes.length])*/) {
+							if (displayInfo.audioOs != null && bytes.length > 0 && !Arrays.equals(bytes, new byte[bytes.length])) {
 								new Thread(() -> {
 									displayInfo.audioLock.lock();
 									try {
@@ -1387,7 +1388,7 @@ public class VideoCapture extends Thread {
 			@Override
 			public void onFrame(byte[] frame) {
 				if (Main.plugin.httpEnabled || Main.plugin.audioUdpEnabled) {
-					if (displayInfo.audioOs != null/*  && !Arrays.equals(frame, new byte[frame.length])*/) {
+					if (displayInfo.audioOs != null && frame.length > 0 && !Arrays.equals(frame, new byte[frame.length])) {
 						displayInfo.audioLock.lock();
 						try {
 							displayInfo.audioOs.write(frame);
