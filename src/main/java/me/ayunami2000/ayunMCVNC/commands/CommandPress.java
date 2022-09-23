@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 public class CommandPress extends AyunCommand {
 	CommandPress() {
-		super("press", "ayunmcvnc.interact");
+		super("press", "ayunmcvnc.interact", 2);
 	}
 
 	@Override

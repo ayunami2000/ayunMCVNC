@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 public class CommandKeystate extends AyunCommand {
 	CommandKeystate() {
-		super("keystate", "ayunmcvnc.interact");
+		super("keystate", "ayunmcvnc.interact", 2);
 	}
 
 	@Override

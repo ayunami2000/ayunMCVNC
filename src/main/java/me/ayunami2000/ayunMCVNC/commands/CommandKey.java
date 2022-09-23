@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 public class CommandKey extends AyunCommand {
 	CommandKey() {
-		super("key", "ayunmcvnc.interact");
+		super("key", "ayunmcvnc.interact", 1);
 	}
 
 	@Override

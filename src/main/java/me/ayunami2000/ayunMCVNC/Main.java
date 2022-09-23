@@ -97,6 +97,8 @@ public class Main extends JavaPlugin implements Listener {
 		pm.registerEvents(this, this);
 		pm.registerEvents(new ScreenClickEvent(), this);
 
+		Bukkit.getPluginCommand(AyunCommand.baseName).setTabCompleter(new TabCompletion());
+
 		FramePacketSender framePacketSender = new FramePacketSender();
 		tasks.add(framePacketSender.runTaskTimerAsynchronously(this, 0, 1));
 
@@ -163,7 +165,7 @@ public class Main extends JavaPlugin implements Listener {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
-		if (!command.getName().equals("mcvnc")) return false;
+		if (!command.getName().equalsIgnoreCase(AyunCommand.baseName)) return false;
 		if (args.length > 0) {
 			String subCommand = args[0].toLowerCase();
 			if (AyunCommand.commandRegistry.containsKey(subCommand)) {

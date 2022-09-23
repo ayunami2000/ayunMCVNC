@@ -7,6 +7,7 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,27 +33,29 @@ public abstract class AyunCommand {
 	}
 
 
-	protected static String baseName = "mcvnc";
+	public static String baseName = "mcvnc";
 
 
 	public final String name;
 	public final Permission requiredPermission;
+	public final int tabCompleteIndex;
 
 	AyunCommand(String name, String permission) {
-		this(new String[] {name}, new Permission(permission));
+		this(new String[] {name}, permission, -1);
 	}
 
 	AyunCommand(String[] names, String permission) {
-		this(names, new Permission(permission));
+		this(names, permission, -1);
 	}
 
-	AyunCommand(String name, Permission permission) {
-		this(new String[] {name}, permission);
+	AyunCommand(String name, String permission, int tabCompleteIndex) {
+		this(new String[] {name}, permission, tabCompleteIndex);
 	}
 
-	AyunCommand(String[] names, Permission permission) {
+	AyunCommand(String[] names, String permission, int tabCompleteIndex) {
 		this.name = names.length == 0 ? "" : names[0];
-		this.requiredPermission = permission;
+		this.requiredPermission = new Permission(permission);
+		this.tabCompleteIndex = tabCompleteIndex;
 		for (String name : names) {
 			commandRegistry.put(name, this);
 		}
@@ -63,6 +66,15 @@ public abstract class AyunCommand {
 			run(sender, args, new SenderType(sender));
 		} else {
 			sendError(sender, "You do not have permission to use this command!");
+		}
+	}
+
+	public boolean shouldTabComplete(CommandSender sender, String[] args) {
+		if (sender.hasPermission(this.requiredPermission)) {
+			if (this.tabCompleteIndex < 0) return false;
+			return Math.max(1, args.length) > this.tabCompleteIndex;
+		} else {
+			return false;
 		}
 	}
 
