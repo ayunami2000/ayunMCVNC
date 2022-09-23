@@ -1,7 +1,6 @@
 package me.ayunami2000.ayunMCVNC.commands;
 
 import me.ayunami2000.ayunMCVNC.DisplayInfo;
-import me.ayunami2000.ayunMCVNC.ImageManager;
 import org.bukkit.command.CommandSender;
 
 import java.util.Set;
