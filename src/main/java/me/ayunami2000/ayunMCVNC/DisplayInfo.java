@@ -105,7 +105,7 @@ public class DisplayInfo {
 				try {
 					if (Main.plugin.ffmpegParams.isEmpty()) {
 						String sampleFormat = Main.plugin.audioSampleFormats.get(Main.plugin.audioSampleFormat);
-						audioProcess = new ProcessBuilder("ffmpeg", "-re", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-thread_queue_size", "4096", "-f", sampleFormat, "-acodec", "pcm_" + sampleFormat, "-ac", Main.plugin.audioChannelNum + "", "-ar", Main.plugin.audioFrequency + "", "-i", "pipe:", "-f", "mp3", "-").start();
+						audioProcess = new ProcessBuilder("ffmpeg", "-stream_loop", "-1", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-thread_queue_size", "4096", "-f", sampleFormat, "-acodec", "pcm_" + sampleFormat, "-ac", Main.plugin.audioChannelNum + "", "-ar", Main.plugin.audioFrequency + "", "-i", "pipe:", "-f", "mp3", "-").start();
 					} else {
 						audioProcess = new ProcessBuilder(Main.plugin.ffmpegParams).start();
 					}
