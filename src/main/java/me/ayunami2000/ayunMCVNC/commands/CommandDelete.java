@@ -6,7 +6,7 @@ import org.bukkit.command.CommandSender;
 
 public class CommandDelete extends AyunCommand {
 	CommandDelete() {
-		super("delete", "ayunmcvnc.manage");
+		super("delete", "ayunmcvnc.manage", new int[] {1, -1});
 	}
 
 	@Override

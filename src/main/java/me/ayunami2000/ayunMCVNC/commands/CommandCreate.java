@@ -20,7 +20,7 @@ import java.util.List;
 
 public class CommandCreate extends AyunCommand {
 	CommandCreate() {
-		super("create", "ayunmcvnc.manage");
+		super("create", "ayunmcvnc.manage", new int[] {1, -1});
 	}
 
 	@Override

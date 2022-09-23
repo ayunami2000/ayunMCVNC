@@ -6,7 +6,7 @@ import org.bukkit.command.CommandSender;
 
 public class CommandToggle extends AyunCommand {
 	CommandToggle() {
-		super("toggle", "ayunmcvnc.manage");
+		super("toggle", "ayunmcvnc.manage", new int[] {1, -1});
 	}
 
 	@Override

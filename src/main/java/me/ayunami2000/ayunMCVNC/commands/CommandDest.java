@@ -6,7 +6,7 @@ import org.bukkit.command.CommandSender;
 
 public class CommandDest extends AyunCommand {
 	CommandDest() {
-		super("dest", "ayunmcvnc.manage");
+		super("dest", "ayunmcvnc.manage", new int[] {1, -1});
 	}
 
 	@Override

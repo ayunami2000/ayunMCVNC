@@ -6,7 +6,7 @@ import org.bukkit.command.CommandSender;
 
 public class CommandMouse extends AyunCommand {
 	CommandMouse() {
-		super("mouse", "ayunmcvnc.manage");
+		super("mouse", "ayunmcvnc.manage", new int[] {1, -1});
 	}
 
 	@Override

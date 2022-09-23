@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 public class CommandMove extends AyunCommand {
 	CommandMove() {
-		super("mouse", "ayunmcvnc.manage");
+		super("mouse", "ayunmcvnc.manage", new int[] {1, -1});
 	}
 
 	@Override

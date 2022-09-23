@@ -38,24 +38,24 @@ public abstract class AyunCommand {
 
 	public final String name;
 	public final Permission requiredPermission;
-	public final int tabCompleteIndex;
+	public final int[] tabCompleteType;
 
 	AyunCommand(String name, String permission) {
-		this(new String[] {name}, permission, -1);
+		this(new String[] {name}, permission, new int[] {-1});
 	}
 
 	AyunCommand(String[] names, String permission) {
-		this(names, permission, -1);
+		this(names, permission, new int[] {-1});
 	}
 
-	AyunCommand(String name, String permission, int tabCompleteIndex) {
-		this(new String[] {name}, permission, tabCompleteIndex);
+	AyunCommand(String name, String permission, int[] tabCompleteType) {
+		this(new String[] {name}, permission, tabCompleteType);
 	}
 
-	AyunCommand(String[] names, String permission, int tabCompleteIndex) {
+	AyunCommand(String[] names, String permission, int[] tabCompleteType) {
 		this.name = names.length == 0 ? "" : names[0];
 		this.requiredPermission = new Permission(permission);
-		this.tabCompleteIndex = tabCompleteIndex;
+		this.tabCompleteType = tabCompleteType;
 		for (String name : names) {
 			commandRegistry.put(name, this);
 		}
@@ -69,12 +69,11 @@ public abstract class AyunCommand {
 		}
 	}
 
-	public boolean shouldTabComplete(CommandSender sender, String[] args) {
+	public int tabComplete(CommandSender sender, String[] args) {
 		if (sender.hasPermission(this.requiredPermission)) {
-			if (this.tabCompleteIndex < 0) return false;
-			return Math.max(1, args.length) > this.tabCompleteIndex;
+			return this.tabCompleteType[Math.min(this.tabCompleteType.length - 1, Math.max(1, args.length) - 1)];
 		} else {
-			return false;
+			return -1;
 		}
 	}
 

@@ -11,7 +11,6 @@ import java.util.List;
 
 public class TabCompletion implements TabCompleter {
 	List<String> completions = new ArrayList<>();
-
 	{
 		completions.add("space");
 		completions.add("exclam");
@@ -910,12 +909,21 @@ public class TabCompletion implements TabCompleter {
 		if (args.length > 0) {
 			String subCommand = args[0].toLowerCase();
 			if (AyunCommand.commandRegistry.containsKey(subCommand)) {
-				if (AyunCommand.commandRegistry.get(subCommand).shouldTabComplete(sender, Arrays.copyOfRange(args, 1, args.length))) {
-					List<String> suggestions = new ArrayList<>(completions);
-					String lastThing = args[args.length - 1].toLowerCase();
-					suggestions.removeIf(s -> !s.toLowerCase().startsWith(lastThing));
-					return suggestions;
+				AyunCommand ayunCommand = AyunCommand.commandRegistry.get(subCommand);
+				int tabCompleteType = ayunCommand.tabComplete(sender, Arrays.copyOfRange(args, 1, args.length));
+				if (tabCompleteType == -1) return null;
+				List<String> suggestions;
+				if (tabCompleteType == 0) {
+					suggestions = new ArrayList<>(completions);
+				} else if (tabCompleteType == 1) {
+					suggestions = new ArrayList<>(DisplayInfo.displays.keySet());
+					suggestions.add(0, "@");
+				} else {
+					return null;
 				}
+				String lastThing = args[args.length - 1].toLowerCase();
+				suggestions.removeIf(s -> !s.toLowerCase().startsWith(lastThing));
+				return suggestions;
 			}
 		}
 		return null;

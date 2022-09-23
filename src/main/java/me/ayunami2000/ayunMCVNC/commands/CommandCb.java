@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 public class CommandCb extends AyunCommand {
 	CommandCb() {
-		super("cb", "ayunmcvnc.manage");
+		super("cb", "ayunmcvnc.manage", new int[] {1, -1});
 	}
 
 	@Override

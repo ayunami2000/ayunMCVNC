@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 public class CommandType extends AyunCommand {
 	CommandType() {
-		super("type", "ayunmcvnc.interact");
+		super("type", "ayunmcvnc.interact", new int[] {1, -1});
 	}
 
 	@Override

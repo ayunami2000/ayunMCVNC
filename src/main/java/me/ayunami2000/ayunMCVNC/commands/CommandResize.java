@@ -15,7 +15,7 @@ import java.util.List;
 
 public class CommandResize extends AyunCommand {
 	CommandResize() {
-		super("resize", "ayunmcvnc.manage");
+		super("resize", "ayunmcvnc.manage", new int[] {1, -1});
 	}
 
 	@Override

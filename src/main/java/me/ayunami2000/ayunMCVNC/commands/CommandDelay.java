@@ -6,7 +6,7 @@ import org.bukkit.command.CommandSender;
 
 public class CommandDelay extends AyunCommand {
 	CommandDelay() {
-		super("delay", "ayunmcvnc.manage");
+		super("delay", "ayunmcvnc.manage", new int[] {1, -1});
 	}
 
 	@Override
