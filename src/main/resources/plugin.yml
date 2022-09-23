@@ -7,10 +7,17 @@ commands:
     description: Manage ayunMCVNC
     usage: /<command>
 permissions:
-  ayunmcvnc.interact:
-    description: Interact with displays generated with ayunMCVNC
   ayunmcvnc.manage:
     description: Manage ayunMCVNC
+    default: op
+    children:
+      ayunmcvnc.interact: true
+      ayunmcvnc.view: true
+  ayunmcvnc.interact:
+    description: Interact with displays generated with ayunMCVNC
+    default: op
+    children:
+      ayunmcvnc.view: true
   ayunmcvnc.view:
     description: View/listen to displays generated with ayunMCVNC
     default: true

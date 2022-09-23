@@ -1,0 +1,28 @@
+package me.ayunami2000.ayunMCVNC.commands;
+
+import me.ayunami2000.ayunMCVNC.DisplayInfo;
+import me.ayunami2000.ayunMCVNC.ImageManager;
+import org.bukkit.command.CommandSender;
+
+public class CommandDelete extends AyunCommand {
+	CommandDelete() {
+		super("delete", "ayunmcvnc.manage");
+	}
+
+	@Override
+	public void run(CommandSender sender, String[] args, SenderType senderType) {
+		if (args.length < 1) {
+			sendUsage(sender, "<name>");
+			return;
+		}
+		DisplayInfo displayInfo = getDisplay(sender, args[0]);
+		if (displayInfo == null) {
+			sendError(sender, "Invalid display!");
+			return;
+		}
+		displayInfo.delete(true);
+		ImageManager.getInstance().removeImage(displayInfo.name);
+		ImageManager.getInstance().saveData();
+		sendMessage(sender, "Display successfully deleted!");
+	}
+}

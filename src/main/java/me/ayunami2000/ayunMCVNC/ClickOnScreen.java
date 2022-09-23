@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class ClickOnScreen {
-	static BlockFace[] numberToBlockFace = new BlockFace[]{BlockFace.SOUTH, BlockFace.WEST, BlockFace.NORTH, BlockFace.EAST};
+	public static BlockFace[] numberToBlockFace = new BlockFace[]{BlockFace.SOUTH, BlockFace.WEST, BlockFace.NORTH, BlockFace.EAST};
 
 	public static boolean numBetween(double num, double val1, double val2) {
 		double maxVal = Math.max(val1, val2);
