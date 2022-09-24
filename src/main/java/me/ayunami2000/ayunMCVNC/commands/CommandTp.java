@@ -31,10 +31,10 @@ public class CommandTp extends AyunCommand {
 			sendError(sender, "Invalid display!");
 			return;
 		}
-		BlockFace blockFace = ClickOnScreen.numberToBlockFace[(int) (((displayInfo.location.getYaw() / 90) + 2) % 4)].getOppositeFace();
-		Location targetLoc = displayInfo.location.clone().add(displayInfo.locEnd).multiply(0.5).add(blockFace.getModX(), blockFace.getModY(), blockFace.getModZ());
+		BlockFace blockFace = ClickOnScreen.numberToBlockFace[(int) (((displayInfo.location.getYaw() / 90) + 2) % 4)];
+		Location targetLoc = displayInfo.location.clone().add(displayInfo.locEnd).multiply(0.5).add(0.5 + blockFace.getModX(), blockFace.getModY() - 0.5, 0.5 + blockFace.getModZ());
 		if (senderType.isPlayer) {
-			((Player) senderType).teleport(targetLoc);
+			((Player) sender).teleport(targetLoc);
 			sendMessage(sender, "Teleported to display!");
 		} else if (senderType.isBlock) {
 			Location blockLoc = ((BlockCommandSender) sender).getBlock().getLocation();

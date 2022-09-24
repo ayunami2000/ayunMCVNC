@@ -236,7 +236,7 @@ public class DisplayInfo {
 		for (DisplayInfo display : displayValues) {
 			if (includePaused && display.paused) continue;
 			if (sourceLoc.getWorld() != display.location.getWorld()) continue;
-			Location targetLoc = display.location.clone().add(display.locEnd).multiply(0.5);
+			Location targetLoc = display.location.clone().add(display.locEnd).multiply(0.5).add(0.5, 0.5, 0.5);
 			double dist = sourceLoc.distanceSquared(targetLoc);
 			if (hardLimit != -1 && dist > hardLimit) continue;
 			displaySorter.put(dist, display);

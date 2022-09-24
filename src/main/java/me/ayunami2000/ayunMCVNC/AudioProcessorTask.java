@@ -61,7 +61,7 @@ class AudioProcessorTask extends BukkitRunnable {
 				}
 
 				if (Main.plugin.httpEnabled) {
-					Location myPos = display.location.clone().add(display.locEnd).multiply(0.5);
+					Location myPos = display.location.clone().add(display.locEnd).multiply(0.5).add(0.5, 0.5, 0.5);
 
 					List<String> names = Bukkit.getOnlinePlayers().stream().filter(player -> player.hasPermission("ayunmcvnc.view") && DisplayInfo.getNearest(player, 4096, false) == display).map(player -> player.getName()).collect(Collectors.toList());
 
@@ -74,7 +74,7 @@ class AudioProcessorTask extends BukkitRunnable {
 							Location loc = player.getLocation();
 							float yaw = loc.getYaw();
 							float pitch = loc.getPitch();
-							Vector pos = new Vector(0.5 + myPos.getX() - loc.getX(), myPos.getY() - loc.getY(), 0.5 + myPos.getZ() - loc.getZ());
+							Vector pos = new Vector(myPos.getX() - loc.getX(), myPos.getY() - loc.getY(), myPos.getZ() - loc.getZ());
 							pos = Main.rotateVectorCC(pos, new Vector(0, 1, 0), (float) ((yaw + 180) * Math.PI / 180.0));
 							pos = Main.rotateVectorCC(pos, new Vector(1, 0, 0), (float) (pitch * Math.PI / 180.0));
 							//pos = new Vec3d(pos.x * Math.cos(yaw) + pos.z * Math.sin(yaw), pos.y - (pitch / 90), pos.z * Math.cos(yaw) - pos.x * Math.sin(yaw));

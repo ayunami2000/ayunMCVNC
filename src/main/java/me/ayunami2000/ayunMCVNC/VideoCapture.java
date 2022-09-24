@@ -305,7 +305,7 @@ class VideoCaptureVnc extends VideoCaptureBase {
 		config.setBellListener(unused -> {
 			Collection<? extends Player> players = Bukkit.getOnlinePlayers();
 			for (Player player : players) {
-				player.playNote(displayInfo.location.clone().add(displayInfo.locEnd).multiply(0.5), Instrument.PIANO, Note.natural(0, Note.Tone.C));
+				player.playNote(displayInfo.location.clone().add(displayInfo.locEnd).multiply(0.5).add(0.5, 0.5, 0.5), Instrument.PIANO, Note.natural(0, Note.Tone.C));
 			}
 		});
 	}

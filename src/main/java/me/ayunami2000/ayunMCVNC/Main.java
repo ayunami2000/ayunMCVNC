@@ -174,7 +174,7 @@ public class Main extends JavaPlugin implements Listener {
 				AyunCommand.sendError(sender, "Unknown sub-command!");
 			}
 		} else {
-			AyunCommand.sendMessage(sender, "Usage: /mcvnc [create|delete|toggle|move|resize|mouse|delay|dest|list|cb|type|key|press|keystate] [...]");
+			AyunCommand.sendMessage(sender, "Usage: /mcvnc [" + String.join("|", AyunCommand.commandRegistry.keySet()) + "] [...]");
 		}
 		return true;
 	}
