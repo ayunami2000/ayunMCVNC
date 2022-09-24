@@ -234,7 +234,7 @@ public class DisplayInfo {
 		TreeMap<Double, DisplayInfo> displaySorter = new TreeMap<>();
 		Location sourceLoc = (player != null ? player.getLocation() : cmdBlockSender.getBlock().getLocation());
 		for (DisplayInfo display : displayValues) {
-			if (includePaused && display.paused) continue;
+			if (!includePaused && display.paused) continue;
 			if (sourceLoc.getWorld() != display.location.getWorld()) continue;
 			Location targetLoc = display.location.clone().add(display.locEnd).multiply(0.5).add(0.5, 0.5, 0.5);
 			double dist = sourceLoc.distanceSquared(targetLoc);
