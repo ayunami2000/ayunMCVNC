@@ -2,6 +2,7 @@ name: ayunMCVNC
 description: VNC for Minecraft 1.12.2!!
 version: 1.0.0
 main: me.ayunami2000.ayunMCVNC.Main
+softdepend: [Multiverse-Core] # Load Multiverse worlds FIRST
 commands:
   mcvnc:
     description: Manage ayunMCVNC
