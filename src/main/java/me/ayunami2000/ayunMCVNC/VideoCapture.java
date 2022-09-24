@@ -54,17 +54,6 @@ class VideoCaptureBase extends Thread {
 	public AudioCapture audioCapture = null;
 
 	public void onFrame(BufferedImage frame) {
-		if (displayInfo.directController != null) {
-			if (displayInfo.mapIds.size() >= 6) {
-				// at least 6 frames, enough for a cubemap
-				try {
-					ImageIO.write(frame, "JPEG", displayInfo.directOs);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				return;
-			}
-		}
 		displayInfo.currentFrame = frame;
 	}
 

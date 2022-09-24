@@ -160,11 +160,7 @@ class FrameProcessorTask extends BukkitRunnable {
 				return;
 			}
 			if (frame.getWidth() != displayInfo.width * 128 || frame.getHeight() != 128 * (int) Math.ceil(displayInfo.mapIds.size() / (double) displayInfo.width)) {
-				if (displayInfo.directController == null) {
-					frame = resize(frame, 128 * displayInfo.width, 128 * (int) Math.ceil(displayInfo.mapIds.size() / (double) displayInfo.width)); // also changes type
-				} else {
-					frame = resize(frame, 128 * displayInfo.mapIds.size(), 128);
-				}
+				frame = resize(frame, 128 * displayInfo.width, 128 * (int) Math.ceil(displayInfo.mapIds.size() / (double) displayInfo.width)); // also changes type
 			} else if (frame.getType() != BufferedImage.TYPE_3BYTE_BGR) {
 				frame = changeType(frame);
 			}
