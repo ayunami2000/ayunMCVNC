@@ -40,6 +40,9 @@ public class DisplayInfo {
 
 	public static final List<Integer> unusedMapIds = new ArrayList<>();
 
+	public ZContext directZContext = new ZContext();
+
+
 	public final List<Integer> mapIds;
 	public final String name;
 	public boolean mouse;
@@ -62,7 +65,6 @@ public class DisplayInfo {
 	public OutputStream directOs;
 	public InputStream directIs;
 	public Process directProcess;
-	public ZContext directZContext;
 	public ZMQ.Socket directZSocket;
 	public VideoCapture videoCapture;
 	private final BukkitTask task1;
@@ -160,47 +162,57 @@ public class DisplayInfo {
 			directIs = null;
 			directOs = null;
 		}
-		if (directZSocket != null) {
-			directZSocket.disconnect("tcp://127.0.0.1:" + uniquePort);
-			directZSocket.close();
-		}
-		if (directZContext != null) {
-			if (!directZContext.isClosed()) {
-				directZContext.close();
+		try {
+			if (directZSocket != null) {
+				directZSocket.disconnect("tcp://127.0.0.1:" + uniquePort);
+				directZSocket.close();
 			}
+		} catch (ZMQException ze) {
+			ze.printStackTrace();
 		}
 		this.directController = directController;
 		if (directController != null) {
 			try {
-				directProcess = new ProcessBuilder("ffmpeg", "-stream_loop", "-1", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-thread_queue_size", "4096", "-f", "image2pipe", "-codec", "mjpeg", "-i", "pipe:", "-vf", "v360=input=flat:output=c6x1:out_forder=lfrbud:yaw=0:pitch=0,zmq=bind_address=tcp\\\\://127.0.0.1\\\\:" + uniquePort, "-f", "rawvideo", "-c:v", "mjpeg", "-qscale:v", "16", "-r", "20", "-s", "768x128", "-").start();
+				directProcess = new ProcessBuilder("ffmpeg", "-stream_loop", "-1", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-thread_queue_size", "4096", "-f", "image2pipe", "-codec", "mjpeg", "-i", "pipe:", "-vf", "v360=input=flat:output=c6x1:out_forder=lfrbud:yaw=0:pitch=0:rorder=pyr,zmq=bind_address=tcp\\\\://127.0.0.1\\\\:" + uniquePort, "-f", "rawvideo", "-c:v", "mjpeg", "-qscale:v", "16", "-r", "10", "-s", "768x128", "-").start();
 				directIs = directProcess.getInputStream();
 				directOs = directProcess.getOutputStream();
-				directZContext = new ZContext();
 				directZSocket = directZContext.createSocket(SocketType.REQ);
 				directZSocket.connect("tcp://127.0.0.1:" + uniquePort);
 				new Thread(() -> {
 					try {
 						double yaw = 0;
 						double pitch = 0;
-						while (directProcess.isAlive() && !directZContext.isClosed()) {
+						while (directProcess.isAlive()) {
+							directZSocket.send("Parsed_v360_0 yaw " + (int) -yaw);
+							directZSocket.recv();
+							directZSocket.send("Parsed_v360_0 pitch " + (int) -pitch);
+							directZSocket.recv();
 							Player directPlayer = Bukkit.getPlayerExact(this.directController);
 							if (directPlayer != null && directPlayer.isOnline()) {
 								Location loc = directPlayer.getLocation();
 								yaw = loc.getYaw() - 180;
-								pitch = loc.getPitch() + 90;
+								pitch = loc.getPitch();
 							}
 							directZSocket.send("Parsed_v360_0 yaw " + (int) yaw);
 							directZSocket.recv();
 							directZSocket.send("Parsed_v360_0 pitch " + (int) pitch);
 							directZSocket.recv();
+							try {
+								Thread.sleep(250);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
 						}
 					} catch (ZMQException ze) {
 						ze.printStackTrace();
 					}
-					if (!directZContext.isClosed()) {
-						directZSocket.disconnect("tcp://127.0.0.1:" + uniquePort);
-						directZSocket.close();
-						directZContext.close();
+					try {
+						if (directZSocket != null) {
+							directZSocket.disconnect("tcp://127.0.0.1:" + uniquePort);
+							directZSocket.close();
+						}
+					} catch (ZMQException ze) {
+						ze.printStackTrace();
 					}
 				}).start();
 				new Thread(() -> {
@@ -302,14 +314,13 @@ public class DisplayInfo {
 		if (directProcess != null) {
 			directProcess.destroy();
 		}
-		if (directZSocket != null) {
-			directZSocket.disconnect("tcp://127.0.0.1:" + uniquePort);
-			directZSocket.close();
-		}
-		if (directZContext != null) {
-			if (!directZContext.isClosed()) {
-				directZContext.close();
+		try {
+			if (directZSocket != null) {
+				directZSocket.disconnect("tcp://127.0.0.1:" + uniquePort);
+				directZSocket.close();
 			}
+		} catch (ZMQException ze) {
+			ze.printStackTrace();
 		}
 	}
 
