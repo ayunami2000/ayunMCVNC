@@ -57,7 +57,6 @@ class VideoCaptureBase extends Thread {
 		if (displayInfo.directController != null) {
 			if (displayInfo.mapIds.size() >= 6) {
 				// at least 6 frames, enough for a cubemap
-				// ffmpeg -i lagtrain.mp4 -to 10s -vf "v360=input=flat:output=c6x1:out_forder=lfrbud:yaw=45:pitch=45" lagtrain_3d.mp4
 				try {
 					ImageIO.write(frame, "JPEG", displayInfo.directOs);
 				} catch (IOException e) {

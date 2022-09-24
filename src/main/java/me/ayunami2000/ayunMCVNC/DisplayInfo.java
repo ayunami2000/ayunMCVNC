@@ -77,8 +77,6 @@ public class DisplayInfo {
 		this.dest = dest;
 		this.paused = paused;
 
-		this.setDirectController(directController);
-
 		this.setEndLoc();
 
 		displays.put(this.name, this);
@@ -105,6 +103,8 @@ public class DisplayInfo {
 		}
 
 		System.out.println("Unique port for display " + name + ": " + uniquePort);
+
+		this.setDirectController(directController);
 
 		if (Main.plugin.audioUdpEnabled) {
 			try {
@@ -186,12 +186,12 @@ public class DisplayInfo {
 							Player directPlayer = Bukkit.getPlayerExact(this.directController);
 							if (directPlayer != null && directPlayer.isOnline()) {
 								Location loc = directPlayer.getLocation();
-								yaw = loc.getYaw();
+								yaw = loc.getYaw() - 180;
 								pitch = loc.getPitch() + 90;
 							}
-							directZSocket.send("Parsed_v360_0 yaw " + yaw);
+							directZSocket.send("Parsed_v360_0 yaw " + (int) yaw);
 							directZSocket.recv();
-							directZSocket.send("Parsed_v360_0 pitch " + pitch);
+							directZSocket.send("Parsed_v360_0 pitch " + (int) pitch);
 							directZSocket.recv();
 						}
 					} catch (ZMQException ze) {
