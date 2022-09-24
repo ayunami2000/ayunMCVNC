@@ -70,9 +70,9 @@ public class ClickOnScreen {
 						x = Math.max(0, Math.min(1, x));
 
 						int slot = player.getInventory().getHeldItemSlot();
-						if (slot > 5) {
+						if (slot == 8) {
 							// do nothing
-						} else if (!doClick) {
+						} else if ((slot == 7 && doClick) || slot == 6 || !doClick) {
 							display.videoCapture.clickMouse(x, y, 0, false);
 						} else {
 							display.videoCapture.clickMouse(x, y, (slot % 3) + 1, slot == 3 || slot == 4 || slot == 5);

@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// ffmpeg -y -re -stream_loop -1 -thread_queue_size 4096 -f dshow -framerate 30 -i video="MiraBox Capture":audio="Microphone (3- Logitech G430 Gaming Headset)" -f rawvideo -c:v mjpeg -qscale:v 16 -r 20 -s 512x384 udp://127.0.0.1:1337 -f s16le -acodec pcm_s16le -ac 2 -ar 48000 udp://127.0.0.1:1338
+
 // ffmpeg -y -re -stream_loop -1 -thread_queue_size 4096 -f gdigrab -framerate 20 -i desktop -an -f rawvideo -c:v mjpeg -qscale:v 16 -r 20 -s 512x256 udp://127.0.0.1:1337
 
 // ffmpeg -y -re -stream_loop -1 -thread_queue_size 4096 -f dshow -i video="OBS Virtual Camera":audio="CABLE Output (VB-Audio Virtual Cable)" -f rawvideo -c:v mjpeg -qscale:v 16 -r 20 udp://127.0.0.1:1337 -f s16le -acodec pcm_s16le -ac 2 -ar 48000 udp://127.0.0.1:1338
@@ -52,6 +54,19 @@ class VideoCaptureBase extends Thread {
 	public AudioCapture audioCapture = null;
 
 	public void onFrame(BufferedImage frame) {
+		if (displayInfo.directController != null) {
+			if (displayInfo.mapIds.size() >= 6) {
+				// at least 6 frames, enough for a cubemap
+				// ffmpeg -i lagtrain.mp4 -to 10s -vf "v360=input=flat:output=c6x1:out_forder=lfrbud:yaw=45:pitch=45" lagtrain_3d.mp4
+				try {
+					ImageIO.write(frame, "JPEG", displayInfo.directOs);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return;
+			}
+		}
+		displayInfo.currentFrame = frame;
 	}
 
 	public static BufferedImage toBufferedImage(Image img) {
@@ -1358,26 +1373,11 @@ public class VideoCapture extends Thread {
 		this.height = (int) Math.ceil(displayInfo.mapIds.size() / (double) displayInfo.width);
 
 		if (displayInfo.dest.toLowerCase().startsWith("http:") || displayInfo.dest.toLowerCase().startsWith("https:")) {
-			videoCapture = new VideoCaptureMjpeg() {
-				@Override
-				public void onFrame(BufferedImage frame) {
-					displayInfo.currentFrame = frame;
-				}
-			};
+			videoCapture = new VideoCaptureMjpeg();
 		} else if (displayInfo.dest.contains(":")) {
-			videoCapture = new VideoCaptureVnc() {
-				@Override
-				public void onFrame(BufferedImage frame) {
-					displayInfo.currentFrame = frame;
-				}
-			};
+			videoCapture = new VideoCaptureVnc();
 		} else {
-			videoCapture = new VideoCaptureUDPServer() {
-				@Override
-				public void onFrame(BufferedImage frame) {
-					displayInfo.currentFrame = frame;
-				}
-			};
+			videoCapture = new VideoCaptureUDPServer();
 		}
 
 		videoCapture.displayInfo = displayInfo;

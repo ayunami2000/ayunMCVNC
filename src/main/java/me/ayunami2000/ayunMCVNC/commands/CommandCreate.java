@@ -61,6 +61,8 @@ public class CommandCreate extends AyunCommand {
 
 		boolean paused = args.length < 7 ? false : Boolean.parseBoolean(args[6]);
 
+		String directController = args.length < 8 ? null : args[7];
+
 		List<Integer> mapIds = new ArrayList<>(width * height);
 
 		for (int i = 0; i < width * height; i++) {
@@ -77,7 +79,7 @@ public class CommandCreate extends AyunCommand {
 
 			mapIds.add((int) mapView.getId());
 		}
-		DisplayInfo displayInfo = new DisplayInfo(newName, mapIds, mouse, audio, loc, width, dest, paused);
+		DisplayInfo displayInfo = new DisplayInfo(newName, mapIds, mouse, audio, loc, width, dest, paused, directController);
 		ImageManager.getInstance().saveImage(displayInfo);
 		sendMessage(sender, "Display successfully created!");
 	}

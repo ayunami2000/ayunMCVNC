@@ -62,9 +62,9 @@ public class Main extends JavaPlugin implements Listener {
 		slotTexts.add("Toggle left click");
 		slotTexts.add("Toggle middle click");
 		slotTexts.add("Toggle right click");
-		slotTexts.add("No action");
-		slotTexts.add("No action");
-		slotTexts.add("No action");
+		slotTexts.add("Just move mouse");
+		slotTexts.add("Move mouse on click");
+		slotTexts.add("Do nothing");
 	}
 
 	@Override

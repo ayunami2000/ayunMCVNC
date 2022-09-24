@@ -1,13 +1,20 @@
 package me.ayunami2000.ayunMCVNC;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.BlockCommandSender;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQException;
 
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,6 +49,7 @@ public class DisplayInfo {
 	public int width;
 	public String dest;
 	public boolean paused;
+	public String directController;
 
 	public BufferedImage currentFrame = null;
 	public DatagramSocket audioSocket;
@@ -51,10 +59,15 @@ public class DisplayInfo {
 	public OutputStream audioOs;
 	public InputStream audioIs;
 	public Process audioProcess;
+	public OutputStream directOs;
+	public InputStream directIs;
+	public Process directProcess;
+	public ZContext directZContext;
+	public ZMQ.Socket directZSocket;
 	public VideoCapture videoCapture;
 	private final BukkitTask task1;
 
-	public DisplayInfo(String name, List<Integer> mapIds, boolean mouse, int audio, Location location, int width, String dest, boolean paused) {
+	public DisplayInfo(String name, List<Integer> mapIds, boolean mouse, int audio, Location location, int width, String dest, boolean paused, String directController) {
 		this.name = name;
 		this.mapIds = mapIds;
 		this.mouse = mouse;
@@ -63,6 +76,8 @@ public class DisplayInfo {
 		this.width = width;
 		this.dest = dest;
 		this.paused = paused;
+
+		this.setDirectController(directController);
 
 		this.setEndLoc();
 
@@ -74,24 +89,24 @@ public class DisplayInfo {
 		FrameProcessorTask frameProcessorTask = new FrameProcessorTask(this, this.mapIds.size(), this.width);
 		Main.tasks.add(task1 = frameProcessorTask.runTaskTimerAsynchronously(Main.plugin, 0, 1));
 
+		switch (Main.plugin.audioUdpPortMode) {
+			case 1:
+				try {
+					ServerSocket ss = new ServerSocket(0);
+					uniquePort = ss.getLocalPort();
+					ss.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				break;
+			case 0:
+			default:
+				uniquePort = (18000 + mapIds.get(0));
+		}
+
+		System.out.println("Unique port for display " + name + ": " + uniquePort);
+
 		if (Main.plugin.audioUdpEnabled) {
-			switch (Main.plugin.audioUdpPortMode) {
-				case 1:
-					try {
-						ServerSocket ss = new ServerSocket(0);
-						uniquePort = ss.getLocalPort();
-						ss.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					break;
-				case 0:
-				default:
-					uniquePort = (18000 + mapIds.get(0));
-			}
-
-			System.out.println("Audio UDP port for display " + name + ": " + uniquePort);
-
 			try {
 				audioSocket = new DatagramSocket();
 				audioSocket.setReuseAddress(true);
@@ -138,6 +153,89 @@ public class DisplayInfo {
 		}
 	}
 
+	public void setDirectController(String directController) {
+		if ((this.directController == null || directController == null) ? this.directController == directController : this.directController.equals(directController)) return;
+		if (directProcess != null) {
+			directProcess.destroy();
+			directIs = null;
+			directOs = null;
+		}
+		if (directZSocket != null) {
+			directZSocket.disconnect("tcp://127.0.0.1:" + uniquePort);
+			directZSocket.close();
+		}
+		if (directZContext != null) {
+			if (!directZContext.isClosed()) {
+				directZContext.close();
+			}
+		}
+		this.directController = directController;
+		if (directController != null) {
+			try {
+				directProcess = new ProcessBuilder("ffmpeg", "-stream_loop", "-1", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-thread_queue_size", "4096", "-f", "image2pipe", "-codec", "mjpeg", "-i", "pipe:", "-vf", "v360=input=flat:output=c6x1:out_forder=lfrbud:yaw=0:pitch=0,zmq=bind_address=tcp\\\\://127.0.0.1\\\\:" + uniquePort, "-f", "rawvideo", "-c:v", "mjpeg", "-qscale:v", "16", "-r", "20", "-s", "768x128", "-").start();
+				directIs = directProcess.getInputStream();
+				directOs = directProcess.getOutputStream();
+				directZContext = new ZContext();
+				directZSocket = directZContext.createSocket(SocketType.REQ);
+				directZSocket.connect("tcp://127.0.0.1:" + uniquePort);
+				new Thread(() -> {
+					try {
+						double yaw = 0;
+						double pitch = 0;
+						while (directProcess.isAlive() && !directZContext.isClosed()) {
+							Player directPlayer = Bukkit.getPlayerExact(this.directController);
+							if (directPlayer != null && directPlayer.isOnline()) {
+								Location loc = directPlayer.getLocation();
+								yaw = loc.getYaw();
+								pitch = loc.getPitch() + 90;
+							}
+							directZSocket.send("Parsed_v360_0 yaw " + yaw);
+							directZSocket.recv();
+							directZSocket.send("Parsed_v360_0 pitch " + pitch);
+							directZSocket.recv();
+						}
+					} catch (ZMQException ze) {
+						ze.printStackTrace();
+					}
+					if (!directZContext.isClosed()) {
+						directZSocket.disconnect("tcp://127.0.0.1:" + uniquePort);
+						directZSocket.close();
+						directZContext.close();
+					}
+				}).start();
+				new Thread(() -> {
+					try {
+						while (directProcess.isAlive()) {
+							int avail = directIs.available();
+							if (avail == 0) continue;
+							byte[] imgBytes = new byte[avail];
+							directIs.read(imgBytes, 0, avail);
+							BufferedImage img = ImageIO.read(new ByteArrayInputStream(imgBytes));
+							if (img != null) currentFrame = img;
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}).start();
+				new Thread(() -> {
+					try {
+						InputStream err = directProcess.getErrorStream();
+						while (directProcess.isAlive()) {
+							int avail = err.available();
+							byte[] errBytes = new byte[avail];
+							err.read(errBytes, 0, avail);
+							System.out.print(new String(errBytes));
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}).start();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 	public static class Shell {
 
 		public String name;
@@ -148,6 +246,7 @@ public class DisplayInfo {
 		public int width;
 		public String dest;
 		public boolean paused;
+		public String directController;
 
 		public Shell(DisplayInfo source, boolean recycle) {
 			this.name = source.name;
@@ -158,11 +257,12 @@ public class DisplayInfo {
 			this.width = source.width;
 			this.dest = source.dest;
 			this.paused = source.paused;
+			this.directController = source.directController;
 			source.delete(recycle);
 		}
 
 		public DisplayInfo create() {
-			return new DisplayInfo(this.name, this.mapIds, this.mouse, this.audio, this.location, this.width, this.dest, this.paused);
+			return new DisplayInfo(this.name, this.mapIds, this.mouse, this.audio, this.location, this.width, this.dest, this.paused, this.directController);
 		}
 	}
 
@@ -198,6 +298,18 @@ public class DisplayInfo {
 		}
 		if (audioProcess != null) {
 			audioProcess.destroy();
+		}
+		if (directProcess != null) {
+			directProcess.destroy();
+		}
+		if (directZSocket != null) {
+			directZSocket.disconnect("tcp://127.0.0.1:" + uniquePort);
+			directZSocket.close();
+		}
+		if (directZContext != null) {
+			if (!directZContext.isClosed()) {
+				directZContext.close();
+			}
 		}
 	}
 
