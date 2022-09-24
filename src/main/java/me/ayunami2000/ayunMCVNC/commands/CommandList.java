@@ -17,7 +17,9 @@ public class CommandList extends AyunCommand {
 		if (displayIds.size() == 0) {
 			sendMessage(sender, "(there are no displays...)");
 		} else {
-			sendMessage(sender, " -> @ (nearest display)");
+			DisplayInfo nearest = DisplayInfo.getNearest(sender);
+			String nearestName = nearest == null ? "" : (" (" + nearest.name + ")");
+			sendMessage(sender, " -> @ (nearest display)" + nearestName);
 			for (String displayId : displayIds) {
 				sendMessage(sender, " -> " + displayId);
 			}

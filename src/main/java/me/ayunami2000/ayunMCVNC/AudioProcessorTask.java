@@ -63,7 +63,7 @@ class AudioProcessorTask extends BukkitRunnable {
 				if (Main.plugin.httpEnabled) {
 					Location myPos = display.location.clone().add(display.locEnd).multiply(0.5);
 
-					List<String> names = Bukkit.getOnlinePlayers().stream().filter(player -> player.hasPermission("ayunmcvnc.view") && DisplayInfo.getNearest(player, 4096) == display).map(player -> player.getName()).collect(Collectors.toList());
+					List<String> names = Bukkit.getOnlinePlayers().stream().filter(player -> player.hasPermission("ayunmcvnc.view") && DisplayInfo.getNearest(player, 4096, false) == display).map(player -> player.getName()).collect(Collectors.toList());
 
 					if (names.isEmpty()) continue;
 

@@ -73,6 +73,9 @@
         bufferSize = val * 4;
     }
 
+    setBuffer(document.querySelector("input[type=range]").value);
+    set3D(document.querySelector("input[type=checkbox]").checked);
+
     function doit(elem) {
         if (doneit) return;
         const uname = prompt("Please enter your username in-game:", getCookie("uname"));

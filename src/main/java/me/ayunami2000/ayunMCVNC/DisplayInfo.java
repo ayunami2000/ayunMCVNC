@@ -43,7 +43,6 @@ public class DisplayInfo {
 	public int width;
 	public String dest;
 	public boolean paused;
-	public String directController;
 
 	public BufferedImage currentFrame = null;
 	public DatagramSocket audioSocket;
@@ -107,7 +106,7 @@ public class DisplayInfo {
 				try {
 					if (Main.plugin.ffmpegParams.isEmpty()) {
 						String sampleFormat = Main.plugin.audioSampleFormats.get(Main.plugin.audioSampleFormat);
-						audioProcess = new ProcessBuilder("ffmpeg", "-stream_loop", "-1", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-thread_queue_size", "4096", "-f", sampleFormat, "-acodec", "pcm_" + sampleFormat, "-ac", Main.plugin.audioChannelNum + "", "-ar", Main.plugin.audioFrequency + "", "-i", "pipe:", "-f", "mp3", "-").start();
+						audioProcess = new ProcessBuilder("ffmpeg", "-re", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-async", Main.plugin.audioFrequency + "", "-thread_queue_size", "4096", "-f", sampleFormat, "-acodec", "pcm_" + sampleFormat, "-ac", Main.plugin.audioChannelNum + "", "-ar", Main.plugin.audioFrequency + "", "-i", "pipe:", "-f", "mp3", "-").start();
 					} else {
 						audioProcess = new ProcessBuilder(Main.plugin.ffmpegParams).start();
 					}
@@ -208,16 +207,20 @@ public class DisplayInfo {
 	}
 
 	public static DisplayInfo getNearest(CommandSender sender, int hardLimit) {
-		List<DisplayInfo> nearestDisplays = getSorted(sender, hardLimit);
+		return getNearest(sender, hardLimit, true);
+	}
+
+	public static DisplayInfo getNearest(CommandSender sender, int hardLimit, boolean includePaused) {
+		List<DisplayInfo> nearestDisplays = getSorted(sender, hardLimit, includePaused);
 		if (nearestDisplays.isEmpty()) return null;
 		return nearestDisplays.get(0);
 	}
 
 	public static DisplayInfo getNearest(CommandSender sender) {
-		return getNearest(sender, -1);
+		return getNearest(sender, -1, true);
 	}
 
-	public static List<DisplayInfo> getSorted(CommandSender sender, int hardLimit) {
+	public static List<DisplayInfo> getSorted(CommandSender sender, int hardLimit, boolean includePaused) {
 		Collection<DisplayInfo> displayValues = displays.values();
 		BlockCommandSender cmdBlockSender = null;
 		Player player = null;
@@ -229,8 +232,9 @@ public class DisplayInfo {
 			return new ArrayList<>();
 		}
 		TreeMap<Double, DisplayInfo> displaySorter = new TreeMap<>();
+		Location sourceLoc = (player != null ? player.getLocation() : cmdBlockSender.getBlock().getLocation());
 		for (DisplayInfo display : displayValues) {
-			Location sourceLoc = (player != null ? player.getLocation() : cmdBlockSender.getBlock().getLocation());
+			if (includePaused && display.paused) continue;
 			if (sourceLoc.getWorld() != display.location.getWorld()) continue;
 			Location targetLoc = display.location.clone().add(display.locEnd).multiply(0.5);
 			double dist = sourceLoc.distanceSquared(targetLoc);

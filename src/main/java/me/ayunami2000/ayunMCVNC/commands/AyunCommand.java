@@ -28,6 +28,7 @@ public abstract class AyunCommand {
 		new CommandPress();
 		new CommandResize();
 		new CommandToggle();
+		new CommandTp();
 		new CommandType();
 	}
 
