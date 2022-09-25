@@ -77,7 +77,7 @@ class FramePacketSender extends BukkitRunnable {
 		if (!player.hasPermission("ayunmcvnc.view")) return;
 		for (PacketItem packet : packets) {
 			if (packet != null && packet.packet != null) {
-				if (DisplayInfo.getSorted(player, 4096, true).contains(packet.display)) {
+				if (DisplayInfo.getSorted(player, 4096, true, false).contains(packet.display)) {
 					if (packet.display.audio > 0) {
 						new Thread(() -> {
 							try {

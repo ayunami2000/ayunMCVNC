@@ -20,6 +20,7 @@ public abstract class AyunCommand {
 		new CommandDelay();
 		new CommandDelete();
 		new CommandDest();
+		new CommandDirect();
 		new CommandKey();
 		new CommandKeystate();
 		new CommandList();

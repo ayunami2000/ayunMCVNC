@@ -29,7 +29,7 @@ public class CommandCreate extends AyunCommand {
 		}
 		Player player = (Player) sender;
 		if (args.length < 6) {
-			sendUsage(sender, "<name> <width (e.g. 5)> <height (e.g. 4)> <mouse (e.g. true)> <video_delay|disable_audio_with_negative_value> <vnc_ip:port|mjpeg_url|udp_port>[;audioport][;vnc_uname][;vnc_passwd] [paused]");
+			sendUsage(sender, "<name> <width (e.g. 5)> <height (e.g. 4)> <mouse (e.g. true)> <video_delay|disable_audio_with_negative_value> <vnc_ip:port|mjpeg_url|udp_port>[;audioport][;vnc_uname][;vnc_passwd] [paused] [direct_controller_username]");
 			return;
 		}
 		String newName = args[0].toLowerCase();
@@ -61,6 +61,8 @@ public class CommandCreate extends AyunCommand {
 
 		boolean paused = args.length < 7 ? false : Boolean.parseBoolean(args[6]);
 
+		String directController = args.length < 8 ? null : args[7];
+
 		List<Integer> mapIds = new ArrayList<>(width * height);
 
 		for (int i = 0; i < width * height; i++) {
@@ -77,7 +79,7 @@ public class CommandCreate extends AyunCommand {
 
 			mapIds.add((int) mapView.getId());
 		}
-		DisplayInfo displayInfo = new DisplayInfo(newName, mapIds, mouse, audio, loc, width, dest, paused);
+		DisplayInfo displayInfo = new DisplayInfo(newName, mapIds, mouse, audio, loc, width, dest, paused, directController);
 		ImageManager.getInstance().saveImage(displayInfo);
 		sendMessage(sender, "Display successfully created!");
 	}

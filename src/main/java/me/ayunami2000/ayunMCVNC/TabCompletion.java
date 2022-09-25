@@ -8,6 +8,7 @@ import org.bukkit.command.TabCompleter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TabCompletion implements TabCompleter {
 	List<String> completions = new ArrayList<>();
@@ -906,25 +907,29 @@ public class TabCompletion implements TabCompleter {
 	@Override
 	public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
 		if (!cmd.getName().equalsIgnoreCase(AyunCommand.baseName)) return null;
-		if (args.length > 0) {
-			String subCommand = args[0].toLowerCase();
-			if (AyunCommand.commandRegistry.containsKey(subCommand)) {
-				AyunCommand ayunCommand = AyunCommand.commandRegistry.get(subCommand);
-				int tabCompleteType = ayunCommand.tabComplete(sender, Arrays.copyOfRange(args, 1, args.length));
-				if (tabCompleteType == -1) return null;
-				List<String> suggestions;
-				if (tabCompleteType == 0) {
-					suggestions = new ArrayList<>(completions);
-				} else if (tabCompleteType == 1) {
-					suggestions = new ArrayList<>(DisplayInfo.displays.keySet());
-					suggestions.add(0, "@");
-				} else {
-					return null;
-				}
-				String lastThing = args[args.length - 1].toLowerCase();
-				suggestions.removeIf(s -> !s.toLowerCase().startsWith(lastThing));
-				return suggestions;
+		String subCommand = args.length < 1 ? "" : args[0].toLowerCase();
+		if (args.length < 2) {
+			List<String> suggestions = new ArrayList<>(AyunCommand.commandRegistry.keySet());
+			suggestions.removeIf(s -> !s.toLowerCase().startsWith(subCommand));
+			return suggestions;
+		}
+		if (AyunCommand.commandRegistry.containsKey(subCommand)) {
+			AyunCommand ayunCommand = AyunCommand.commandRegistry.get(subCommand);
+			int tabCompleteType = ayunCommand.tabComplete(sender, Arrays.copyOfRange(args, 1, args.length));
+			if (tabCompleteType == -1) return null;
+			List<String> suggestions;
+			if (tabCompleteType == 0) {
+				suggestions = new ArrayList<>(completions);
+			} else if (tabCompleteType == 1) {
+				List<DisplayInfo> nearestDisplays = DisplayInfo.getSorted(sender, -1, true, true);
+				suggestions = nearestDisplays.stream().map(displayInfo -> displayInfo.name).collect(Collectors.toList());
+				suggestions.add(0, "@");
+			} else {
+				return null;
 			}
+			String lastThing = args[args.length - 1].toLowerCase();
+			suggestions.removeIf(s -> !s.toLowerCase().startsWith(lastThing));
+			return suggestions;
 		}
 		return null;
 	}
