@@ -157,7 +157,7 @@ public class DisplayInfo {
 	}
 
 	public void setDirectController(String directController) {
-		if ((this.directController == null || directController == null) ? this.directController == directController : this.directController.equals(directController)) return;
+		if ((this.directController == null || directController == null) ? (this.directController == null && directController == null) : this.directController.equals(directController)) return;
 		if (directProcess != null) {
 			directProcess.destroy();
 			directIs = null;
