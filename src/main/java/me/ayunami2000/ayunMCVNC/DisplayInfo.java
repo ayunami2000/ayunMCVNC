@@ -192,15 +192,23 @@ public class DisplayInfo {
 								yaw = loc.getYaw();
 								pitch = loc.getPitch();
 							}
-							double diffYaw = oldYaw - yaw;
-							while (diffYaw > 180) diffYaw -= 360;
-							while (diffYaw < -180) diffYaw += 360;
-							directZSocket.send("Parsed_v360_0 yaw " + diffYaw);
+							directZSocket.send("Parsed_v360_0 reset_rot 1");
 							directZSocket.recv();
-							double diffPitch = pitch - oldPitch;
-							while (diffPitch > 180) diffPitch -= 360;
-							while (diffPitch < -180) diffPitch += 360;
-							directZSocket.send("Parsed_v360_0 pitch " + diffPitch);
+							while (yaw > 180) {
+								yaw -= 360;
+							}
+							while (yaw < -180) {
+								yaw += 360;
+							}
+							directZSocket.send("Parsed_v360_0 yaw " + (-yaw));
+							directZSocket.recv();
+							while (pitch > 180) {
+								pitch -= 360;
+							}
+							while (pitch < -180) {
+								pitch += 360;
+							}
+							directZSocket.send("Parsed_v360_0 pitch " + pitch);
 							directZSocket.recv();
 							oldYaw = yaw;
 							oldPitch = pitch;
