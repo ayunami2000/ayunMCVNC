@@ -63,6 +63,11 @@ public class CommandCreate extends AyunCommand {
 
 		String directController = args.length < 8 ? null : args[7];
 
+		if (directController != null) {
+			width = 6;
+			height = 1;
+		}
+
 		List<Integer> mapIds = new ArrayList<>(width * height);
 
 		for (int i = 0; i < width * height; i++) {

@@ -29,6 +29,10 @@ public class CommandResize extends AyunCommand {
 			sendError(sender, "Invalid display!");
 			return;
 		}
+		if (displayInfo.directController != null) {
+			sendError(sender, "You cannot resize a display that is in direct control mode!");
+			return;
+		}
 		int width = Integer.parseInt(args[1]);
 		int height = Integer.parseInt(args[2]);
 		DisplayInfo.Shell shell = new DisplayInfo.Shell(displayInfo, true);

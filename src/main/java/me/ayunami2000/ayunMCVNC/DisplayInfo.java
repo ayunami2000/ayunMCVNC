@@ -12,6 +12,7 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -173,35 +174,36 @@ public class DisplayInfo {
 		this.directController = directController;
 		if (directController != null) {
 			try {
-				directProcess = new ProcessBuilder("ffmpeg", "-stream_loop", "-1", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-thread_queue_size", "4096", "-f", "image2pipe", "-codec", "mjpeg", "-i", "pipe:", "-vf", "v360=input=flat:output=c6x1:out_forder=lfrbud:yaw=0:pitch=0:rorder=pyr,zmq=bind_address=tcp\\\\://127.0.0.1\\\\:" + uniquePort, "-f", "rawvideo", "-c:v", "mjpeg", "-qscale:v", "16", "-r", "10", "-s", "768x128", "-").start();
+				directProcess = new ProcessBuilder("ffmpeg", "-re", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-f", "image2pipe", "-codec", "mjpeg", "-i", "pipe:", "-vf", "v360=input=flat:output=c6x1:out_forder=lfrbud:yaw=0:pitch=0:rorder=pyr,zmq=bind_address=tcp\\\\://127.0.0.1\\\\:" + uniquePort, "-f", "rawvideo", "-c:v", "mjpeg", "-qscale:v", "16", "-r", "10", "-s", "768x128", "-").start();
 				directIs = directProcess.getInputStream();
 				directOs = directProcess.getOutputStream();
 				directZSocket = directZContext.createSocket(SocketType.REQ);
 				directZSocket.connect("tcp://127.0.0.1:" + uniquePort);
 				new Thread(() -> {
 					try {
-						double yaw = 0;
-						double pitch = 0;
+						double oldYaw = 0;
+						double oldPitch = 0;
 						while (directProcess.isAlive()) {
-							directZSocket.send("Parsed_v360_0 yaw " + (int) -yaw);
-							directZSocket.recv();
-							directZSocket.send("Parsed_v360_0 pitch " + (int) -pitch);
-							directZSocket.recv();
 							Player directPlayer = Bukkit.getPlayerExact(this.directController);
+							double yaw = oldYaw;
+							double pitch = oldPitch;
 							if (directPlayer != null && directPlayer.isOnline()) {
 								Location loc = directPlayer.getLocation();
-								yaw = loc.getYaw() - 180;
+								yaw = loc.getYaw();
 								pitch = loc.getPitch();
 							}
-							directZSocket.send("Parsed_v360_0 yaw " + (int) yaw);
+							double diffYaw = oldYaw - yaw;
+							while (diffYaw > 180) diffYaw -= 360;
+							while (diffYaw < -180) diffYaw += 360;
+							directZSocket.send("Parsed_v360_0 yaw " + diffYaw);
 							directZSocket.recv();
-							directZSocket.send("Parsed_v360_0 pitch " + (int) pitch);
+							double diffPitch = pitch - oldPitch;
+							while (diffPitch > 180) diffPitch -= 360;
+							while (diffPitch < -180) diffPitch += 360;
+							directZSocket.send("Parsed_v360_0 pitch " + diffPitch);
 							directZSocket.recv();
-							try {
-								Thread.sleep(250);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
+							oldYaw = yaw;
+							oldPitch = pitch;
 						}
 					} catch (ZMQException ze) {
 						ze.printStackTrace();
@@ -222,8 +224,12 @@ public class DisplayInfo {
 							if (avail == 0) continue;
 							byte[] imgBytes = new byte[avail];
 							directIs.read(imgBytes, 0, avail);
-							BufferedImage img = ImageIO.read(new ByteArrayInputStream(imgBytes));
-							if (img != null) currentFrame = img;
+							try {
+								BufferedImage img = ImageIO.read(new ByteArrayInputStream(imgBytes));
+								if (img != null) currentFrame = img;
+							} catch (IIOException e) {
+								e.printStackTrace();
+							}
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -310,6 +316,17 @@ public class DisplayInfo {
 		}
 		if (audioProcess != null) {
 			audioProcess.destroy();
+		}
+		if (directProcess != null) {
+			directProcess.destroy();
+		}
+		try {
+			if (directZSocket != null) {
+				directZSocket.disconnect("tcp://127.0.0.1:" + uniquePort);
+				directZSocket.close();
+			}
+		} catch (ZMQException ze) {
+			ze.printStackTrace();
 		}
 	}
 
