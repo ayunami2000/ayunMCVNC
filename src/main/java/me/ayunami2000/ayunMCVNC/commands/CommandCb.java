@@ -28,8 +28,8 @@ public class CommandCb extends AyunCommand {
 		switch (args[1].toLowerCase()) {
 			case "key":
 				if (args.length > 2) {
-					String[] trimargs = Arrays.copyOfRange(args, 3, args.length);
-					for (String arg : trimargs) {
+					String[] trimArgs = Arrays.copyOfRange(args, 2, args.length);
+					for (String arg : trimArgs) {
 						displayInfo.videoCapture.holdKey(arg);
 					}
 				} else {
