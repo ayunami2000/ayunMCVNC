@@ -265,7 +265,6 @@ class VideoCaptureVnc extends VideoCaptureBase {
 	private VernacularClient client = new VernacularClient(config);
 	private int screenWidth = 0;
 	private int screenHeight = 0;
-	private int rendering = 0;
 	private int cachex = 0;
 	private int cachey = 0;
 
@@ -281,7 +280,7 @@ class VideoCaptureVnc extends VideoCaptureBase {
 		config.setEnableRreEncoding(true);
 		config.setEnableZLibEncoding(true);
 
-		// config.setTargetFramesPerSecond(5);
+		config.setTargetFramesPerSecond(20);
 
 		config.setShared(true);
 
@@ -290,8 +289,7 @@ class VideoCaptureVnc extends VideoCaptureBase {
 		config.setAudioFrequencySupplier(() -> Main.plugin.audioFrequency);
 
 		config.setScreenUpdateListener(image -> {
-			if (displayInfo.paused || rendering > 5) return; // don't get too behind
-			rendering++;
+			if (displayInfo.paused) return;
 
 			int oldWidth = screenWidth;
 			int oldHeight = screenHeight;
@@ -303,14 +301,6 @@ class VideoCaptureVnc extends VideoCaptureBase {
 			if (screenHeight != oldHeight) cachey = screenHeight / 2;
 
 			onFrame(toBufferedImage(image));
-
-			new Thread(() -> {
-				try {
-					Thread.sleep(200); // frame delay
-				} catch (InterruptedException e) {
-				}
-				rendering--;
-			}).start();
 		});
 
 		config.setBellListener(unused -> {
