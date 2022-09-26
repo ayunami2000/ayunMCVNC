@@ -37,11 +37,15 @@ public class WebSocketHandler extends ChannelInboundHandlerAdapter {
 						if (nearestDisplay == null) {
 							return;
 						}
-						try {
-							int val = Integer.parseInt(message);
-							nearestDisplay.videoCapture.pressKey(Math.abs(val), val >= 0);
-						} catch (NumberFormatException e) {
-							conn.disconnect();
+						if (message.startsWith("t")) {
+							nearestDisplay.videoCapture.typeText(message.substring(1));
+						} else if (message.startsWith("k")) {
+							try {
+								int val = Integer.parseInt(message.substring(1));
+								nearestDisplay.videoCapture.pressKey(Math.abs(val), val >= 0);
+							} catch (NumberFormatException e) {
+								conn.disconnect();
+							}
 						}
 					}
 					return;

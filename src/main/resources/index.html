@@ -16,8 +16,11 @@
 <br/>
 <button onclick="doit(this);">connect</button>
 <br/>
-<textarea style="resize: none;" placeholder="(Send input to a display here...)" disabled></textarea>
+<textarea style="resize: none;" placeholder="type or paste here..." disabled></textarea>
 <script>
+    const textarea = document.querySelector("textarea");
+    textarea.disabled = true;
+
     const keyMap = [
         [8, 0xff08, 0xff08], // bs
         [9, 0xff09, 0xff09], // tab
@@ -211,7 +214,6 @@
         doneit = true;
         document.cookie = "uname=" + uname;
         elem.outerHTML = "";
-        const textarea = document.querySelector("textarea");
         const socket = new WebSocket("ws" + window.location.href.slice(4));
         socket.binaryType = 'arraybuffer';
         socket.onopen = () => {
@@ -262,15 +264,18 @@
             }
         };
 
-        document.body.onkeydown = textarea.onkeydown = function(e) {
+        textarea.onkeydown = function(e) {
             e.preventDefault();
-            if (this == document.body && e.target == textarea) return;
-            if (!textarea.disabled && !e.repeat) socket.send(toRfbKeycode(e.which,e.shiftKey) + "");
+            if (!textarea.disabled && !e.repeat) socket.send("k" + toRfbKeycode(e.which,e.shiftKey));
         };
-        document.body.onkeyup = textarea.onkeyup = function(e) {
+        textarea.onkeyup = function(e) {
             e.preventDefault();
-            if (this == document.body && e.target == textarea) return;
-            if (!textarea.disabled) socket.send(-toRfbKeycode(e.which,e.shiftKey) + "");
+            if (!textarea.disabled) socket.send("k" + (-toRfbKeycode(e.which,e.shiftKey)));
+        };
+        textarea.onpaste = function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            if (!textarea.disabled) socket.send("t" + paste);
         };
     }
 
