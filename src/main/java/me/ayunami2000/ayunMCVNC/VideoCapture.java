@@ -1304,6 +1304,16 @@ class VideoCaptureVnc extends VideoCaptureBase {
 		return -1;
 	}
 
+	public void pressKey(int keynum) {
+		if (!client.isRunning()) return;
+		client.type(keynum);
+	}
+
+	public void pressKey(int keynum, boolean state) {
+		if (!client.isRunning()) return;
+		client.updateKey(keynum, state);
+	}
+
 	public void pressKey(String key) {
 		if (!client.isRunning()) return;
 		int keynum = keyNameToKeySym(key);
@@ -1414,6 +1424,18 @@ public class VideoCapture extends Thread {
 	public void clickMouse(double x, double y, int doClick, boolean drag) {
 		if (videoCapture instanceof VideoCaptureVnc) {
 			((VideoCaptureVnc) videoCapture).clickMouse(x, y, doClick, drag);
+		}
+	}
+
+	public void pressKey(int key) {
+		if (videoCapture instanceof VideoCaptureVnc) {
+			((VideoCaptureVnc) videoCapture).pressKey(key);
+		}
+	}
+
+	public void pressKey(int key, boolean state) {
+		if (videoCapture instanceof VideoCaptureVnc) {
+			((VideoCaptureVnc) videoCapture).pressKey(key, state);
 		}
 	}
 

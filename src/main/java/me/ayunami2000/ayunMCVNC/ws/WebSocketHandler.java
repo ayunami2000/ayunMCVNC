@@ -7,6 +7,7 @@ import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import me.ayunami2000.ayunMCVNC.AudioServer;
+import me.ayunami2000.ayunMCVNC.DisplayInfo;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.apache.commons.lang.RandomStringUtils;
@@ -23,8 +24,25 @@ public class WebSocketHandler extends ChannelInboundHandlerAdapter {
 				if (AudioServer.wsList.containsKey(conn)) {
 					if (message.equals("keep")) {
 						conn.writeAndFlush(new TextWebSocketFrame("alive"));
-					} else {
-						conn.disconnect();
+					} else if (!message.isEmpty()) {
+						Player player = Bukkit.getPlayerExact(AudioServer.wsList.get(conn));
+						if (player == null || !player.isOnline()) {
+							conn.disconnect();
+							return;
+						}
+						if (!player.hasPermission("ayunmcvnc.interact")) {
+							return;
+						}
+						DisplayInfo nearestDisplay = DisplayInfo.getNearest(player, 4096, false);
+						if (nearestDisplay == null) {
+							return;
+						}
+						try {
+							int val = Integer.parseInt(message);
+							nearestDisplay.videoCapture.pressKey(Math.abs(val), val >= 0);
+						} catch (NumberFormatException e) {
+							conn.disconnect();
+						}
 					}
 					return;
 				}
@@ -39,6 +57,14 @@ public class WebSocketHandler extends ChannelInboundHandlerAdapter {
 					if (message.equalsIgnoreCase(key)) {
 						AudioServer.wsList.put(conn, name);
 						conn.writeAndFlush(new TextWebSocketFrame("alive"));
+						Player player = Bukkit.getPlayerExact(name);
+						if (player == null || !player.isOnline()) {
+							conn.disconnect();
+							return;
+						}
+						if (player.hasPermission("ayunmcvnc.interact")) {
+							conn.writeAndFlush(new TextWebSocketFrame("input"));
+						}
 					} else {
 						conn.disconnect();
 					}
