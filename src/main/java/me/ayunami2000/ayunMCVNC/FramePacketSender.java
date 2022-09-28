@@ -1,14 +1,14 @@
 package me.ayunami2000.ayunMCVNC;
 
 import com.google.common.collect.EvictingQueue;
-import net.minecraft.server.v1_12_R1.PacketPlayOutMap;
+import net.minecraft.world.level.saveddata.maps.WorldMap.b;
+import net.minecraft.network.protocol.game.PacketPlayOutMap;
 import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_17_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
 
@@ -85,10 +85,10 @@ class FramePacketSender extends BukkitRunnable {
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
-							craftPlayer.getHandle().playerConnection.networkManager.sendPacket(packet.packet);
+							craftPlayer.getHandle().b.sendPacket(packet.packet);
 						}).start();
 					} else {
-						craftPlayer.getHandle().playerConnection.networkManager.sendPacket(packet.packet);
+						craftPlayer.getHandle().b.sendPacket(packet.packet);
 					}
 				}
 			}
@@ -100,8 +100,8 @@ class FramePacketSender extends BukkitRunnable {
 			throw new NullPointerException("data is null");
 		}
 		return new PacketPlayOutMap(
-				mapId, (byte) 0, false, new HashSet<>(),
-				data, 0, 0, 128, 128);
+				mapId, (byte) 0, false, null,
+				new b(0, 0, 128, 128, data));
 	}
 }
 

@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 
@@ -79,7 +80,9 @@ public class CommandCreate extends AyunCommand {
 				mapView.removeRenderer(renderer);
 			}
 			ItemStack itemStack = new ItemStack(Material.MAP);
-			itemStack.setDurability(mapView.getId());
+			MapMeta mapMeta = (MapMeta) itemStack.getItemMeta();
+			mapMeta.setMapView(mapView);
+			itemStack.setItemMeta(mapMeta);
 			player.getInventory().addItem(itemStack);
 
 			mapIds.add((int) mapView.getId());
