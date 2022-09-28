@@ -227,10 +227,9 @@
                 if (e.data == "alive") {
                     setTimeout(() => socket.send("keep"), 5000);
                 } else if (e.data == "key") {
-                    const key = prompt("Please enter the code received in-game to connect!");
-                    if (!key) {
-                        socket.close();
-                        return;
+                    let key = null;
+                    while (key == null) {
+                        key = prompt("Please enter the code received in-game to connect!");
                     }
                     if (!key.match(/^[a-zA-Z0-9]{10}$/)) {
                         socket.close();
