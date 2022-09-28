@@ -123,7 +123,11 @@ public class DisplayInfo {
 				try {
 					if (Main.plugin.ffmpegParams.isEmpty()) {
 						String sampleFormat = Main.plugin.audioSampleFormats.get(Main.plugin.audioSampleFormat);
-						audioProcess = new ProcessBuilder("ffmpeg", "-re", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-async", Main.plugin.audioFrequency + "", "-thread_queue_size", "4096", "-f", sampleFormat, "-acodec", "pcm_" + sampleFormat, "-ac", Main.plugin.audioChannelNum + "", "-ar", Main.plugin.audioFrequency + "", "-i", "pipe:", "-f", "mp3", "-").start();
+						try {
+							audioProcess = new ProcessBuilder("ffmpeg", "-re", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-async", Main.plugin.audioFrequency + "", "-thread_queue_size", "4096", "-f", sampleFormat, "-acodec", "pcm_" + sampleFormat, "-ac", Main.plugin.audioChannelNum + "", "-ar", Main.plugin.audioFrequency + "", "-i", "pipe:", "-f", "mp3", "-").start();
+						} catch (Exception e) {
+							audioProcess = new ProcessBuilder(Main.plugin.getDataFolder().getAbsolutePath() + "/ffmpeg/ffmpeg", "-re", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-async", Main.plugin.audioFrequency + "", "-thread_queue_size", "4096", "-f", sampleFormat, "-acodec", "pcm_" + sampleFormat, "-ac", Main.plugin.audioChannelNum + "", "-ar", Main.plugin.audioFrequency + "", "-i", "pipe:", "-f", "mp3", "-").start();
+						}
 					} else {
 						audioProcess = new ProcessBuilder(Main.plugin.ffmpegParams).start();
 					}
@@ -174,7 +178,11 @@ public class DisplayInfo {
 		this.directController = directController;
 		if (directController != null) {
 			try {
-				directProcess = new ProcessBuilder("ffmpeg", "-re", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-f", "image2pipe", "-codec", "mjpeg", "-i", "pipe:", "-vf", "v360=input=flat:output=c6x1:out_forder=lfrbud:yaw=0:pitch=0:rorder=pyr,zmq=bind_address=tcp\\\\://127.0.0.1\\\\:" + uniquePort, "-f", "rawvideo", "-c:v", "mjpeg", "-qscale:v", "16", "-r", "10", "-s", "768x128", "-").start();
+				try {
+					directProcess = new ProcessBuilder("ffmpeg", "-re", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-f", "image2pipe", "-codec", "mjpeg", "-i", "pipe:", "-vf", "v360=input=flat:output=c6x1:out_forder=lfrbud:yaw=0:pitch=0:rorder=pyr,zmq=bind_address=tcp\\\\://127.0.0.1\\\\:" + uniquePort, "-f", "rawvideo", "-c:v", "mjpeg", "-qscale:v", "16", "-r", "10", "-s", "768x128", "-").start();
+				} catch (Exception e) {
+					directProcess = new ProcessBuilder(Main.plugin.getDataFolder().getAbsolutePath() + "/ffmpeg/ffmpeg", "-re", "-hide_banner", "-loglevel", "error", "-fflags", "nobuffer", "-f", "image2pipe", "-codec", "mjpeg", "-i", "pipe:", "-vf", "v360=input=flat:output=c6x1:out_forder=lfrbud:yaw=0:pitch=0:rorder=pyr,zmq=bind_address=tcp\\\\://127.0.0.1\\\\:" + uniquePort, "-f", "rawvideo", "-c:v", "mjpeg", "-qscale:v", "16", "-r", "10", "-s", "768x128", "-").start();
+				}
 				directIs = directProcess.getInputStream();
 				directOs = directProcess.getOutputStream();
 				directZSocket = directZContext.createSocket(SocketType.REQ);
