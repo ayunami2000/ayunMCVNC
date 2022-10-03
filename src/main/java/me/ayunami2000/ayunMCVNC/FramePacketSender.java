@@ -3,14 +3,23 @@ package me.ayunami2000.ayunMCVNC;
 import com.google.common.collect.EvictingQueue;
 import net.minecraft.server.v1_12_R1.PacketPlayOutMap;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 class FramePacketSender extends BukkitRunnable {
 	private long frameNumber = 0;
@@ -36,28 +45,43 @@ class FramePacketSender extends BukkitRunnable {
 			if (frameItem == null) {
 				continue;
 			}
-			byte[][] buffers = frameItem.frameBuffer;
-			List<PacketItem> packets = new ArrayList<>(frameItem.display.mapIds.size());
-			int numMaps = frameItem.display.mapIds.size();
-			for (int i = 0; i < numMaps; i++) {
-				byte[] buffer = buffers[i];
-				int mapId = frameItem.display.mapIds.get(i);
-				if (buffer != null) {
-					PacketPlayOutMap packet = getPacket(mapId, buffer);
-					boolean modified = DisplayInfo.screenPartModified.contains(mapId);
-					if (!modified) {
-						packets.add(0, new PacketItem(frameItem.display, packet));
-					} else {
-						packets.add(new PacketItem(frameItem.display, packet));
+			if (frameItem.display.altDisplay) {
+				int[] pixels = frameItem.altFrameBuffer;
+				List<ArmorStand> altDisplayPixels = frameItem.display.location.getWorld().getEntitiesByClass(ArmorStand.class).stream().filter(armorStand -> armorStand.hasMetadata("mcvnc-alt_display")).sorted(Comparator.comparingInt(as -> as.getMetadata("mcvnc-alt_display").get(0).asInt())).collect(Collectors.toList());
+				for (int i = 0; i < altDisplayPixels.size(); i++) {
+					ItemStack oldItem = altDisplayPixels.get(i).getHelmet();
+					if (oldItem == null || oldItem.getType() != Material.LEATHER_HELMET) {
+						oldItem = new ItemStack(Material.LEATHER_HELMET);
 					}
-					DisplayInfo.screenPartModified.add(mapId);
-				} else {
-					DisplayInfo.screenPartModified.remove(mapId);
+					ItemMeta oldMeta = oldItem.getItemMeta();
+					((LeatherArmorMeta) oldMeta).setColor(Color.fromRGB(pixels[i]));
+					oldItem.setItemMeta(oldMeta);
+					altDisplayPixels.get(i).setHelmet(oldItem);
 				}
-			}
+			} else {
+				byte[][] buffers = frameItem.frameBuffer;
+				List<PacketItem> packets = new ArrayList<>(frameItem.display.mapIds.size());
+				int numMaps = frameItem.display.mapIds.size();
+				for (int i = 0; i < numMaps; i++) {
+					byte[] buffer = buffers[i];
+					int mapId = frameItem.display.mapIds.get(i);
+					if (buffer != null) {
+						PacketPlayOutMap packet = getPacket(mapId, buffer);
+						boolean modified = DisplayInfo.screenPartModified.contains(mapId);
+						if (!modified) {
+							packets.add(0, new PacketItem(frameItem.display, packet));
+						} else {
+							packets.add(new PacketItem(frameItem.display, packet));
+						}
+						DisplayInfo.screenPartModified.add(mapId);
+					} else {
+						DisplayInfo.screenPartModified.remove(mapId);
+					}
+				}
 
-			for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-				sendToPlayer(onlinePlayer, packets);
+				for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+					sendToPlayer(onlinePlayer, packets);
+				}
 			}
 
 			if (frameNumber % 300 == 0) {

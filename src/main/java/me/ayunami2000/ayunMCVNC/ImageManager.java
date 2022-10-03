@@ -70,6 +70,7 @@ public class ImageManager implements Listener {
 			displayProperties.set("dest", displayInfo.dest);
 			displayProperties.set("paused", displayInfo.paused);
 			displayProperties.set("direct_controller", displayInfo.directController);
+			displayProperties.set("alt_display", displayInfo.altDisplay);
 		}
 		saveData();
 	}
@@ -98,7 +99,7 @@ public class ImageManager implements Listener {
 				ConfigurationSection displayProperties = displays.getConfigurationSection(displayId);
 				ConfigurationSection location = displayProperties.getConfigurationSection("location");
 				Location loc = new Location(Bukkit.getWorld(location.getString("world")), location.getInt("x"), location.getInt("y"), location.getInt("z"), location.getInt("dir") * 90F, 0);
-				new DisplayInfo(displayId, displayProperties.getIntegerList("mapIds"), displayProperties.getBoolean("mouse"), displayProperties.getInt("audio", -1), loc, displayProperties.getInt("width"), displayProperties.getString("dest"), displayProperties.getBoolean("paused"), displayProperties.getString("direct_controller", null));
+				new DisplayInfo(displayId, displayProperties.getIntegerList("mapIds"), displayProperties.getBoolean("mouse"), displayProperties.getInt("audio", -1), loc, displayProperties.getInt("width"), displayProperties.getString("dest"), displayProperties.getBoolean("paused"), displayProperties.getString("direct_controller", null), displayProperties.getBoolean("alt_display"));
 			}
 		}
 		if (getData().contains("unused")) {

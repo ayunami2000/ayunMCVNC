@@ -165,15 +165,27 @@ class FrameProcessorTask extends BukkitRunnable {
 				frame = changeType(frame);
 			}
 			frameData = ((DataBufferByte) frame.getRaster().getDataBuffer()).getData();
-			ditherFrame();
+			if (displayInfo.altDisplay) {
+				int[] buffers = new int[frame.getWidth() * frame.getHeight()];
 
-			byte[][] buffers = new byte[mapSize][];
+				for (int i = 0; i < buffers.length; i++) {
+					byte b = frameData[3 * i];
+					byte g = frameData[3 * i + 1];
+					byte r = frameData[3 * i + 2];
+					buffers[i] = 65536 * r + 256 * g + b;
+				}
+				FramePacketSender.frameBuffers.offer(new FrameItem(displayInfo, buffers));
+			} else {
+				ditherFrame();
 
-			for (int partId = 0; partId < buffers.length; partId++) {
-				buffers[partId] = getMapData(partId, frameWidth);
+				byte[][] buffers = new byte[mapSize][];
+
+				for (int partId = 0; partId < buffers.length; partId++) {
+					buffers[partId] = getMapData(partId, frameWidth);
+				}
+
+				FramePacketSender.frameBuffers.offer(new FrameItem(displayInfo, buffers));
 			}
-
-			FramePacketSender.frameBuffers.offer(new FrameItem(displayInfo, buffers));
 		}
 	}
 

@@ -54,6 +54,7 @@ public class DisplayInfo {
 	public String dest;
 	public boolean paused;
 	public String directController;
+	public boolean altDisplay;
 
 	public BufferedImage currentFrame = null;
 	public DatagramSocket audioSocket;
@@ -70,7 +71,7 @@ public class DisplayInfo {
 	public VideoCapture videoCapture;
 	private final BukkitTask task1;
 
-	public DisplayInfo(String name, List<Integer> mapIds, boolean mouse, int audio, Location location, int width, String dest, boolean paused, String directController) {
+	public DisplayInfo(String name, List<Integer> mapIds, boolean mouse, int audio, Location location, int width, String dest, boolean paused, String directController, boolean altDisplay) {
 		this.name = name;
 		this.mapIds = mapIds;
 		this.mouse = mouse;
@@ -79,6 +80,7 @@ public class DisplayInfo {
 		this.width = width;
 		this.dest = dest;
 		this.paused = paused;
+		this.altDisplay = altDisplay;
 
 		this.setEndLoc();
 
@@ -281,6 +283,7 @@ public class DisplayInfo {
 		public String dest;
 		public boolean paused;
 		public String directController;
+		public boolean altDisplay;
 
 		public Shell(DisplayInfo source, boolean recycle) {
 			this.name = source.name;
@@ -292,11 +295,12 @@ public class DisplayInfo {
 			this.dest = source.dest;
 			this.paused = source.paused;
 			this.directController = source.directController;
+			this.altDisplay = source.altDisplay;
 			source.delete(recycle);
 		}
 
 		public DisplayInfo create() {
-			return new DisplayInfo(this.name, this.mapIds, this.mouse, this.audio, this.location, this.width, this.dest, this.paused, this.directController);
+			return new DisplayInfo(this.name, this.mapIds, this.mouse, this.audio, this.location, this.width, this.dest, this.paused, this.directController, this.altDisplay);
 		}
 	}
 

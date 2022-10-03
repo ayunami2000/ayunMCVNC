@@ -15,12 +15,14 @@ public abstract class AyunCommand {
 
 	public static void registerCommands() {
 		commandRegistry.clear();
+		new CommandAltDisplay();
 		new CommandCb();
 		new CommandCreate();
 		new CommandDelay();
 		new CommandDelete();
 		new CommandDest();
 		new CommandDirect();
+		new CommandGenAltDisplay();
 		new CommandKey();
 		new CommandKeystate();
 		new CommandList();
