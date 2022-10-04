@@ -40,22 +40,27 @@ public class CommandGenAltDisplay extends AyunCommand {
 		width *= 128;
 		height *= 128;
 		Location entityLoc = displayInfo.location.clone();
+		double origY = entityLoc.getY();
+		double origZ = entityLoc.getZ();
 		for (int y = 0; y < height; y++) {
-			if (y % 4 != 0) continue;
+			if (y % 16 != 0) continue;
 			for (int x = 0; x < width; x++) {
-				if (x % 4 != 0) continue;
+				// if (x % 16 != (y % 32 == 16 ? 8 : 0)) continue;
+				if (x % 16 != 0) continue;
+				entityLoc.setYaw(0);
+				entityLoc.setPitch(0);
 				ArmorStand armorStand = (ArmorStand) displayInfo.location.getWorld().spawnEntity(entityLoc, EntityType.ARMOR_STAND);
 				armorStand.setHelmet(new ItemStack(Material.LEATHER_HELMET));
 				armorStand.setSmall(true);
 				armorStand.setVisible(false);
 				armorStand.setInvulnerable(true);
 				armorStand.setGravity(false);
-				armorStand.setHeadPose(new EulerAngle(45, 0, 22.5));
+				armorStand.setHeadPose(new EulerAngle(45, 0, 45));
 				armorStand.setMetadata("mcvnc-alt_display", new FixedMetadataValue(Main.plugin, x + (y * width)));
 				armorStand.teleport(entityLoc);
-				entityLoc.add(0, 0, -0.0078125);
+				entityLoc.setZ(origZ - 0.0078125 * x);
 			}
-			entityLoc.add(0, -0.0078125, width * 0.0078125);
+			entityLoc.setY(origY - 0.0078125 * y);
 		}
 		sendMessage(sender, "Generated alt display!");
 	}

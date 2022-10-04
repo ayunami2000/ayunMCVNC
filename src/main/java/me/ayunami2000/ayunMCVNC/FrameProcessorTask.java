@@ -172,7 +172,7 @@ class FrameProcessorTask extends BukkitRunnable {
 					byte b = frameData[3 * i];
 					byte g = frameData[3 * i + 1];
 					byte r = frameData[3 * i + 2];
-					buffers[i] = 65536 * r + 256 * g + b;
+					buffers[i] = (255 & r) << 16 | (255 & g) << 8 | (255 & b);
 				}
 				FramePacketSender.frameBuffers.offer(new FrameItem(displayInfo, buffers));
 			} else {

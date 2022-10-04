@@ -4,6 +4,7 @@ import com.google.common.collect.EvictingQueue;
 import net.minecraft.server.v1_12_R1.PacketPlayOutMap;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.ArmorStand;
@@ -47,14 +48,36 @@ class FramePacketSender extends BukkitRunnable {
 			}
 			if (frameItem.display.altDisplay) {
 				int[] pixels = frameItem.altFrameBuffer;
-				List<ArmorStand> altDisplayPixels = frameItem.display.location.getWorld().getEntitiesByClass(ArmorStand.class).stream().filter(armorStand -> armorStand.hasMetadata("mcvnc-alt_display")).sorted(Comparator.comparingInt(as -> as.getMetadata("mcvnc-alt_display").get(0).asInt())).collect(Collectors.toList());
+				List<ArmorStand> altDisplayPixels = new ArrayList<>(new ArrayList<>(frameItem.display.location.getWorld().getEntitiesByClass(ArmorStand.class)).stream().filter(armorStand -> armorStand.hasMetadata("mcvnc-alt_display")).sorted(Comparator.comparingInt(as -> as.getMetadata("mcvnc-alt_display").get(0).asInt())).collect(Collectors.toList()));
+				int heigg = 128 * frameItem.display.mapIds.size() / frameItem.display.width;
 				for (int i = 0; i < altDisplayPixels.size(); i++) {
-					ItemStack oldItem = altDisplayPixels.get(i).getHelmet();
+					ArmorStand armorStand = altDisplayPixels.get(i);
+					// int currX = Math.max(0, Math.min(128 * frameItem.display.width - 1, (int) ((frameItem.display.location.getZ() - armorStand.getLocation().getZ()) * 128)));
+					// int currY = Math.max(0, Math.min(heigg - 1, (int) ((frameItem.display.location.getY() - armorStand.getLocation().getY()) * 128)));
+					// Location newLoc = armorStand.getLocation().clone();
+					/*
+					if (currY + 1 >= heigg) {
+						newLoc.setY(frameItem.display.location.getY());
+						armorStand.teleport(newLoc);
+					} else {
+						newLoc.subtract(0, 0.0078125, 0);
+						armorStand.teleport(newLoc);
+					}
+					currY++;
+					*/
+					/*
+					newLoc.setY(frameItem.display.location.getY() - (Math.random() * heigg / 128));
+					armorStand.teleport(newLoc);
+					*/
+					// currY = Math.max(0, Math.min(heigg - 1, (int) ((frameItem.display.location.getY() - armorStand.getLocation().getY()) * 128)));
+					ItemStack oldItem = armorStand.getHelmet();
 					if (oldItem == null || oldItem.getType() != Material.LEATHER_HELMET) {
 						oldItem = new ItemStack(Material.LEATHER_HELMET);
 					}
 					ItemMeta oldMeta = oldItem.getItemMeta();
-					((LeatherArmorMeta) oldMeta).setColor(Color.fromRGB(pixels[i]));
+					// int pixVal = pixels[(frameItem.display.width * 128 * currY) + currX];
+					int pixVal = pixels[armorStand.getMetadata("mcvnc-alt_display").get(0).asInt()];
+					((LeatherArmorMeta) oldMeta).setColor(Color.fromRGB(pixVal));
 					oldItem.setItemMeta(oldMeta);
 					altDisplayPixels.get(i).setHelmet(oldItem);
 				}
