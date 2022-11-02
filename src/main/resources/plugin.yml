@@ -1,5 +1,5 @@
 name: ayunMCVNC
-description: VNC for Minecraft 1.12.2!!
+description: Map VNC/streaming & audio for Minecraft 1.8-1.19!!
 version: 1.0.0
 main: me.ayunami2000.ayunMCVNC.Main
 softdepend: [Multiverse-Core] # Load Multiverse worlds FIRST
