@@ -1,8 +1,10 @@
 package me.ayunami2000.ayunMCVNC.ws;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
@@ -21,7 +23,7 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
 
 			HttpHeaders headers = httpRequest.headers();
 
-			if (headers.get(HttpHeaderNames.CONNECTION) != null && headers.get(HttpHeaderNames.CONNECTION).toLowerCase().contains("upgrade") && headers.get(HttpHeaderNames.UPGRADE) != null && "WebSocket".equalsIgnoreCase(headers.get(HttpHeaderNames.UPGRADE))) {
+			if (headers.get("connection") != null && headers.get("connection").toLowerCase().contains("upgrade") && headers.get("upgrade") != null && "WebSocket".equalsIgnoreCase(headers.get("upgrade"))) {
 
 				ctx.pipeline().replace(this, "websocketHandler", new WebSocketHandler());
 
@@ -45,7 +47,28 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
 		if (handshaker == null) {
 			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
 		} else {
-			handshaker.handshake(ctx.channel(), req);
+			handshakeSafe(handshaker, ctx.channel(), req);
+		}
+	}
+
+	private Boolean hasHttpReqHandshake = null;
+
+	private void handshakeSafe(WebSocketServerHandshaker handshaker, Channel channel, HttpRequest httpRequest) {
+		if (hasHttpReqHandshake == null) {
+			try {
+				handshaker.handshake(channel, httpRequest);
+				hasHttpReqHandshake = true;
+				return;
+			} catch (NoSuchMethodError e) {
+				hasHttpReqHandshake = false;
+			}
+		}
+		if (hasHttpReqHandshake.booleanValue()) {
+			handshaker.handshake(channel, httpRequest);
+		} else {
+			DefaultFullHttpRequest fullRequest = new DefaultFullHttpRequest(httpRequest.getProtocolVersion(), httpRequest.getMethod(), httpRequest.getUri());
+			fullRequest.headers().add(httpRequest.headers());
+			handshaker.handshake(channel, (FullHttpRequest) fullRequest);
 		}
 	}
 

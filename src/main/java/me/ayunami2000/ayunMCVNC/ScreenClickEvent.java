@@ -59,13 +59,33 @@ public class ScreenClickEvent implements Listener {
 		}
 	}
 
+	private Boolean hasGetHand = null;
+
+	private boolean isMainHand(PlayerInteractEvent event) {
+		if (hasGetHand == null) {
+			try {
+				boolean mainHand = event.getHand() == EquipmentSlot.HAND;
+				hasGetHand = true;
+				return mainHand;
+			} catch (NoSuchMethodError e) {
+				hasGetHand = false;
+				return true;
+			}
+		}
+		if (hasGetHand.booleanValue()) {
+			return event.getHand() == EquipmentSlot.HAND;
+		} else {
+			return true;
+		}
+	}
+
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onRightClick(PlayerInteractEvent event) {
 		Player player = event.getPlayer();
 		if (!player.hasPermission("ayunmcvnc.interact")) return;
 		Action action = event.getAction();
 
-		if ((action.equals(Action.RIGHT_CLICK_BLOCK)) && event.getHand() == EquipmentSlot.HAND) {
+		if ((action.equals(Action.RIGHT_CLICK_BLOCK)) && isMainHand(event)) {
 			Block block = event.getClickedBlock();
 			Block tblock = player.getTargetBlock(null, 5);
 			Location bloc = block.getLocation();

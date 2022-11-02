@@ -1,12 +1,12 @@
 package me.ayunami2000.ayunMCVNC;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.reflect.StructureModifier;
 import com.google.common.collect.EvictingQueue;
-import net.minecraft.server.v1_12_R1.PacketPlayOutMap;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -14,12 +14,11 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 class FramePacketSender extends BukkitRunnable {
@@ -31,17 +30,37 @@ class FramePacketSender extends BukkitRunnable {
 
 	private static class PacketItem {
 		public DisplayInfo display;
-		public PacketPlayOutMap packet;
+		public PacketContainer packet;
 
-		public PacketItem(DisplayInfo display, PacketPlayOutMap packet) {
+		public PacketItem(DisplayInfo display, PacketContainer packet) {
 			this.display = display;
 			this.packet = packet;
 		}
 	}
 
+	private Boolean hasIsCancelled = null;
+
+	public boolean isCancelledSafe() {
+		if (hasIsCancelled == null) {
+			try {
+				boolean cancelled = isCancelled();
+				hasIsCancelled = true;
+				return cancelled;
+			} catch (NoSuchMethodError e) {
+				hasIsCancelled = false;
+				return false;
+			}
+		}
+		if (hasIsCancelled.booleanValue()) {
+			return isCancelled();
+		} else {
+			return false;
+		}
+	}
+
 	@Override
 	public void run() {
-		for (int batch = 0; !isCancelled() && batch < 5; batch++) {
+		for (int batch = 0; !isCancelledSafe() && batch < 5; batch++) {
 			FrameItem frameItem = frameBuffers.poll();
 			if (frameItem == null) {
 				continue;
@@ -49,33 +68,13 @@ class FramePacketSender extends BukkitRunnable {
 			if (frameItem.display.altDisplay) {
 				int[] pixels = frameItem.altFrameBuffer;
 				List<ArmorStand> altDisplayPixels = new ArrayList<>(new ArrayList<>(frameItem.display.location.getWorld().getEntitiesByClass(ArmorStand.class)).stream().filter(armorStand -> armorStand.hasMetadata("mcvnc-alt_display")).sorted(Comparator.comparingInt(as -> as.getMetadata("mcvnc-alt_display").get(0).asInt())).collect(Collectors.toList()));
-				int heigg = 128 * frameItem.display.mapIds.size() / frameItem.display.width;
 				for (int i = 0; i < altDisplayPixels.size(); i++) {
 					ArmorStand armorStand = altDisplayPixels.get(i);
-					// int currX = Math.max(0, Math.min(128 * frameItem.display.width - 1, (int) ((frameItem.display.location.getZ() - armorStand.getLocation().getZ()) * 128)));
-					// int currY = Math.max(0, Math.min(heigg - 1, (int) ((frameItem.display.location.getY() - armorStand.getLocation().getY()) * 128)));
-					// Location newLoc = armorStand.getLocation().clone();
-					/*
-					if (currY + 1 >= heigg) {
-						newLoc.setY(frameItem.display.location.getY());
-						armorStand.teleport(newLoc);
-					} else {
-						newLoc.subtract(0, 0.0078125, 0);
-						armorStand.teleport(newLoc);
-					}
-					currY++;
-					*/
-					/*
-					newLoc.setY(frameItem.display.location.getY() - (Math.random() * heigg / 128));
-					armorStand.teleport(newLoc);
-					*/
-					// currY = Math.max(0, Math.min(heigg - 1, (int) ((frameItem.display.location.getY() - armorStand.getLocation().getY()) * 128)));
 					ItemStack oldItem = armorStand.getHelmet();
 					if (oldItem == null || oldItem.getType() != Material.LEATHER_HELMET) {
 						oldItem = new ItemStack(Material.LEATHER_HELMET);
 					}
 					ItemMeta oldMeta = oldItem.getItemMeta();
-					// int pixVal = pixels[(frameItem.display.width * 128 * currY) + currX];
 					int pixVal = pixels[armorStand.getMetadata("mcvnc-alt_display").get(0).asInt()];
 					((LeatherArmorMeta) oldMeta).setColor(Color.fromRGB(pixVal));
 					oldItem.setItemMeta(oldMeta);
@@ -89,7 +88,7 @@ class FramePacketSender extends BukkitRunnable {
 					byte[] buffer = buffers[i];
 					int mapId = frameItem.display.mapIds.get(i);
 					if (buffer != null) {
-						PacketPlayOutMap packet = getPacket(mapId, buffer);
+						PacketContainer packet = getPacket(mapId, buffer);
 						boolean modified = DisplayInfo.screenPartModified.contains(mapId);
 						if (!modified) {
 							packets.add(0, new PacketItem(frameItem.display, packet));
@@ -120,7 +119,6 @@ class FramePacketSender extends BukkitRunnable {
 	}
 
 	private void sendToPlayer(Player player, List<PacketItem> packets) {
-		CraftPlayer craftPlayer = (CraftPlayer) player;
 		if (!player.hasPermission("ayunmcvnc.view")) return;
 		for (PacketItem packet : packets) {
 			if (packet != null && packet.packet != null) {
@@ -132,23 +130,51 @@ class FramePacketSender extends BukkitRunnable {
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
-							craftPlayer.getHandle().playerConnection.networkManager.sendPacket(packet.packet);
+							try {
+								Main.plugin.protocolManager.sendServerPacket(player, packet.packet);
+							} catch (InvocationTargetException e) {
+								e.printStackTrace();
+							}
 						}).start();
 					} else {
-						craftPlayer.getHandle().playerConnection.networkManager.sendPacket(packet.packet);
+						try {
+							Main.plugin.protocolManager.sendServerPacket(player, packet.packet);
+						} catch (InvocationTargetException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}
 		}
 	}
 
-	private PacketPlayOutMap getPacket(int mapId, byte[] data) {
+	private PacketContainer getPacket(int mapId, byte[] data) {
 		if (data == null) {
 			throw new NullPointerException("data is null");
 		}
-		return new PacketPlayOutMap(
-				mapId, (byte) 0, false, new HashSet<>(),
-				data, 0, 0, 128, 128);
+		PacketContainer packet = new PacketContainer(PacketType.Play.Server.MAP);
+		StructureModifier<Object> packetModifier = packet.getModifier();
+		packetModifier.writeDefaults();
+		StructureModifier<Integer> packetIntegers = packet.getIntegers();
+		if (packetModifier.size() > 5) {
+			packetIntegers.write(1, 0).write(2, 0).write(3, 128).write(4, 128);
+			packet.getByteArrays().write(0, data);
+		} else {
+			try {
+				int lastArg = packetModifier.size() - 1;
+				packetModifier.write(lastArg, packetModifier.getField(lastArg).getType().getConstructor(int.class, int.class, int.class, int.class, byte[].class).newInstance(0, 0, 128, 128, data));
+			} catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+					 NoSuchMethodException e) {
+				e.printStackTrace();
+			}
+		}
+		packetIntegers.write(0, mapId);
+		packet.getBytes().write(0, (byte) 0);
+		StructureModifier<Boolean> packetBooleans = packet.getBooleans();
+		if (packetBooleans.size() > 0) {
+			packetBooleans.write(0, false);
+		}
+		return packet;
 	}
 }
 

@@ -29,10 +29,8 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpChunkedInput;
-import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpMessage;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpUtil;
-import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.LastHttpContent;
@@ -122,18 +120,18 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Htt
 	@Override
 	public void channelRead0(ChannelHandlerContext ctx, HttpRequest request) throws Exception {
 		this.request = request;
-		if (!request.decoderResult().isSuccess()) {
+		if (!request.getDecoderResult().isSuccess()) {
 			sendError(ctx, BAD_REQUEST);
 			return;
 		}
 
-		if (!GET.equals(request.method())) {
+		if (!GET.equals(request.getMethod())) {
 			sendError(ctx, METHOD_NOT_ALLOWED);
 			return;
 		}
 
-		final boolean keepAlive = HttpUtil.isKeepAlive(request);
-		final String uri = request.uri();
+		final boolean keepAlive = isKeepAlive(request);
+		final String uri = request.getUri();
 		final String path = sanitizeUri(uri, this.basePath);
 		if (path == null) {
 			sendError(ctx, FORBIDDEN);
@@ -167,7 +165,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Htt
 		}
 
 		// Cache Validation
-		String ifModifiedSince = request.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE);
+		String ifModifiedSince = request.headers().get("if-modified-since");
 		if (ifModifiedSince != null && !ifModifiedSince.isEmpty()) {
 			SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
 			Date ifModifiedSinceDate = dateFormatter.parse(ifModifiedSince);
@@ -192,14 +190,14 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Htt
 		long fileLength = raf.length();
 
 		HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
-		HttpUtil.setContentLength(response, fileLength);
+		setContentLength(response, fileLength);
 		setContentTypeHeader(response, file);
 		setDateAndCacheHeaders(response, file);
 
 		if (!keepAlive) {
-			response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
-		} else if (request.protocolVersion().equals(HTTP_1_0)) {
-			response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+			response.headers().set("connection", "close");
+		} else if (request.getProtocolVersion().equals(HTTP_1_0)) {
+			response.headers().set("connection", "keep-alive");
 		}
 
 		// Write the initial line and the header.
@@ -325,14 +323,14 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Htt
 		buffer.writeCharSequence(buf.toString(), CharsetUtil.UTF_8);
 
 		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, buffer);
-		response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+		response.headers().set("content-type", "text/html; charset=UTF-8");
 
 		sendAndCleanupConnection(ctx, response);
 	}
 
 	private void sendRedirect(ChannelHandlerContext ctx, String newUri) {
 		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, FOUND, Unpooled.EMPTY_BUFFER);
-		response.headers().set(HttpHeaderNames.LOCATION, newUri);
+		response.headers().set("location", newUri);
 
 		sendAndCleanupConnection(ctx, response);
 	}
@@ -340,7 +338,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Htt
 	private void sendError(ChannelHandlerContext ctx, HttpResponseStatus status) {
 		FullHttpResponse response = new DefaultFullHttpResponse(
 				HTTP_1_1, status, Unpooled.copiedBuffer("Failure: " + status + "\r\n", CharsetUtil.UTF_8));
-		response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
+		response.headers().set("content-type", "text/plain; charset=UTF-8");
 
 		sendAndCleanupConnection(ctx, response);
 	}
@@ -364,14 +362,14 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Htt
 	 */
 	private void sendAndCleanupConnection(ChannelHandlerContext ctx, FullHttpResponse response) {
 		final HttpRequest request = this.request;
-		final boolean keepAlive = HttpUtil.isKeepAlive(request);
-		HttpUtil.setContentLength(response, response.content().readableBytes());
+		final boolean keepAlive = isKeepAlive(request);
+		setContentLength(response, response.content().readableBytes());
 		if (!keepAlive) {
 			// We're going to close the connection as soon as the response is sent,
 			// so we should also make it clear for the client.
-			response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
-		} else if (request.protocolVersion().equals(HTTP_1_0)) {
-			response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+			response.headers().set("connection", "close");
+		} else if (request.getProtocolVersion().equals(HTTP_1_0)) {
+			response.headers().set("connection", "keep-alive");
 		}
 
 		ChannelFuture flushPromise = ctx.writeAndFlush(response);
@@ -393,7 +391,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Htt
 		dateFormatter.setTimeZone(TimeZone.getTimeZone(HTTP_DATE_GMT_TIMEZONE));
 
 		Calendar time = new GregorianCalendar();
-		response.headers().set(HttpHeaderNames.DATE, dateFormatter.format(time.getTime()));
+		response.headers().set("date", dateFormatter.format(time.getTime()));
 	}
 
 	/**
@@ -410,14 +408,14 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Htt
 
 		// Date header
 		Calendar time = new GregorianCalendar();
-		response.headers().set(HttpHeaderNames.DATE, dateFormatter.format(time.getTime()));
+		response.headers().set("date", dateFormatter.format(time.getTime()));
 
 		// Add cache headers
 		time.add(Calendar.SECOND, HTTP_CACHE_SECONDS);
-		response.headers().set(HttpHeaderNames.EXPIRES, dateFormatter.format(time.getTime()));
-		response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, max-age=" + HTTP_CACHE_SECONDS);
+		response.headers().set("expires", dateFormatter.format(time.getTime()));
+		response.headers().set("cache-control", "private, max-age=" + HTTP_CACHE_SECONDS);
 		response.headers().set(
-				HttpHeaderNames.LAST_MODIFIED, dateFormatter.format(new Date(fileToCache.lastModified())));
+				"last-modified", dateFormatter.format(new Date(fileToCache.lastModified())));
 	}
 
 	/**
@@ -434,6 +432,21 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Htt
 			mime = Files.probeContentType(file.toPath());
 		} catch (IOException ignored) {
 		}
-		response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime);
+		response.headers().set("content-type", mime);
+	}
+
+	public static boolean isKeepAlive(HttpMessage message) {
+		String connection = message.headers().get("connection");
+		if (connection != null && "close".equalsIgnoreCase(connection)) {
+			return false;
+		} else if (message.getProtocolVersion().isKeepAliveDefault()) {
+			return !"close".equalsIgnoreCase(connection);
+		} else {
+			return "keep-alive".equalsIgnoreCase(connection);
+		}
+	}
+
+	public static void setContentLength(HttpMessage message, long length) {
+		message.headers().set("content-length", length);
 	}
 }

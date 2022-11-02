@@ -1,5 +1,7 @@
 package me.ayunami2000.ayunMCVNC;
 
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
 import me.ayunami2000.ayunMCVNC.commands.AyunCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
@@ -26,6 +28,8 @@ import java.util.Set;
 
 public class Main extends JavaPlugin implements Listener {
 	public static Main plugin;
+
+	public ProtocolManager protocolManager;
 
 	public static List<BukkitTask> tasks = new ArrayList<>();
 
@@ -65,6 +69,10 @@ public class Main extends JavaPlugin implements Listener {
 		slotTexts.add("Just move mouse");
 		slotTexts.add("Move mouse on click");
 		slotTexts.add("Do nothing");
+	}
+
+	public void onLoad() {
+		protocolManager = ProtocolLibrary.getProtocolManager();
 	}
 
 	@Override

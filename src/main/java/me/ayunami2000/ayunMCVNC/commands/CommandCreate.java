@@ -1,5 +1,8 @@
 package me.ayunami2000.ayunMCVNC.commands;
 
+import com.comphenix.protocol.utility.MinecraftReflection;
+import com.comphenix.protocol.wrappers.nbt.NbtCompound;
+import com.comphenix.protocol.wrappers.nbt.NbtFactory;
 import me.ayunami2000.ayunMCVNC.ClickOnScreen;
 import me.ayunami2000.ayunMCVNC.DisplayInfo;
 import me.ayunami2000.ayunMCVNC.ImageManager;
@@ -76,12 +79,15 @@ public class CommandCreate extends AyunCommand {
 			int potentialMapId = ImageManager.getInstance().reuse();
 			MapView mapView = potentialMapId == -1 ? Bukkit.createMap(loc.getWorld()) : Bukkit.getMap((short) potentialMapId);
 			mapView.setScale(MapView.Scale.CLOSEST);
-			mapView.setUnlimitedTracking(true);
+			ImageManager.setUnlimitedTrackingSafe(mapView, true);
 			for (MapRenderer renderer : mapView.getRenderers()) {
 				mapView.removeRenderer(renderer);
 			}
-			ItemStack itemStack = new ItemStack(Material.MAP);
+			ItemStack itemStack = MinecraftReflection.getBukkitItemStack(new ItemStack(Material.MAP));
 			itemStack.setDurability(mapView.getId());
+			NbtCompound mapNbt = NbtFactory.asCompound(NbtFactory.fromItemTag(itemStack));
+			mapNbt.put("map", (int) mapView.getId());
+			NbtFactory.setItemTag(itemStack, mapNbt);
 			player.getInventory().addItem(itemStack);
 
 			mapIds.add((int) mapView.getId());

@@ -40,7 +40,7 @@ public class ImageManager implements Listener {
 			for (MapRenderer renderer : view.getRenderers())
 				view.removeRenderer(renderer);
 			view.setScale(Scale.CLOSEST);
-			view.setUnlimitedTracking(false);
+			setUnlimitedTrackingSafe(view, false);
 		}
 	}
 
@@ -127,5 +127,22 @@ public class ImageManager implements Listener {
 
 	public void saveData() {
 		Main.plugin.saveConfig();
+	}
+
+	private static Boolean hasSetUnlimitedTracking = null;
+
+	public static void setUnlimitedTrackingSafe(MapView mapView, boolean value) {
+		if (hasSetUnlimitedTracking == null) {
+			try {
+				mapView.setUnlimitedTracking(value);
+				hasSetUnlimitedTracking = true;
+			} catch (NoSuchMethodError e) {
+				hasSetUnlimitedTracking = false;
+			}
+			return;
+		}
+		if (hasSetUnlimitedTracking.booleanValue()) {
+			mapView.setUnlimitedTracking(value);
+		}
 	}
 }
