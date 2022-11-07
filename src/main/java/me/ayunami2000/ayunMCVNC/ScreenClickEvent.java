@@ -206,7 +206,7 @@ public class ScreenClickEvent implements Listener {
 			}
 			Block block = player.getTargetBlock(null, 5);
 			if (ClickOnScreen.numBetween(block.getX(), display.location.getX(), display.locEnd.getX()) && ClickOnScreen.numBetween(block.getY(), display.location.getY(), display.locEnd.getY()) && ClickOnScreen.numBetween(block.getZ	(), display.location.getZ(), display.locEnd.getZ())) {
-				player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("ayunMCVNC: Current tool: " + Main.plugin.slotTexts.get(event.getNewSlot())));
+				ClickOnScreen.sendActionBar(player, "ayunMCVNC: Current tool: " + Main.plugin.slotTexts.get(event.getNewSlot()));
 				break;
 			}
 		}

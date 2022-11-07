@@ -1,5 +1,8 @@
 package me.ayunami2000.ayunMCVNC;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
@@ -9,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.List;
 
@@ -78,7 +82,7 @@ public class ClickOnScreen {
 							display.videoCapture.clickMouse(x, y, (slot % 3) + 1, slot == 3 || slot == 4 || slot == 5);
 						}
 						if (!player.hasMetadata("lookingAtScreen")) {
-							player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("ayunMCVNC: Current tool: " + Main.plugin.slotTexts.get(slot)));
+							sendActionBar(player, "ayunMCVNC: Current tool: " + Main.plugin.slotTexts.get(slot));
 						}
 						player.setMetadata("lookingAtScreen", new FixedMetadataValue(Main.plugin, true));
 						return true;
@@ -90,5 +94,31 @@ public class ClickOnScreen {
 			player.removeMetadata("lookingAtScreen", Main.plugin);
 		}
 		return false;
+	}
+
+	private static Boolean canActionBar = null;
+
+	public static void sendActionBar(Player player, String text) {
+		if (canActionBar == null) {
+			try {
+				player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(text));
+				canActionBar = true;
+			} catch (NoSuchMethodError e) {
+				canActionBar = false;
+			}
+			return;
+		}
+		if (canActionBar.booleanValue()) {
+			player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(text));
+		} else {
+			PacketContainer packet = new PacketContainer(PacketType.Play.Server.CHAT);
+			packet.getChatComponents().write(0, WrappedChatComponent.fromText(text));
+			packet.getBytes().write(0, (byte) 2);
+			try {
+				Main.plugin.protocolManager.sendServerPacket(player, packet);
+			} catch (InvocationTargetException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }
